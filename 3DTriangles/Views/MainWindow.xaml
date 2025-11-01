@@ -19,6 +19,10 @@
 
             <TextBlock Text="Resolution:" VerticalAlignment="Center" Margin="20,0,5,0"/>
             <Slider x:Name="ResolutionSlider" Minimum="2" Maximum="50" Width="150" ValueChanged="Slider_ValueChanged" Value="10"/>
+            
+            <CheckBox x:Name="ShowBezierPolygon" Content="Wielobok Beziera" Margin="20,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
+            <CheckBox x:Name="ShowTriangleMesh" Content="Siatka trójkątów" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
+            <CheckBox x:Name="ShowFilledTriangles" Content="Wypełnione trójkąty" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
         </StackPanel>
 
         <!-- Obszar rysowania -->
