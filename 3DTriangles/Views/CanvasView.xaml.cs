@@ -38,9 +38,9 @@ public partial class CanvasView : UserControl
                 Fill = Brushes.Gray,
                 Points = new PointCollection
                 {
-                    ToCanvas(tri.V0.P, centerX, centerY),
-                    ToCanvas(tri.V1.P, centerX, centerY),
-                    ToCanvas(tri.V2.P, centerX, centerY)
+                    ToCanvas(tri.V0.PRot, centerX, centerY),
+                    ToCanvas(tri.V1.PRot, centerX, centerY),
+                    ToCanvas(tri.V2.PRot, centerX, centerY)
                 }
             };
             DrawCanvas.Children.Add(poly);

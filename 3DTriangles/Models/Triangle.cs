@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace _3DTriangles.Models;
 
 public class Triangle
@@ -12,5 +14,8 @@ public class Triangle
         V1 = v1;
         V2 = v2;
     }
+    
+ 
+
 
 }
