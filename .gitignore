@@ -1,0 +1,68 @@
+# 🛠️ Build i publikacja
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pdb
+*.log
+*.vspscc
+*.vssscc
+*.dbmdl
+*.dbproj.schemaview
+*.psess
+*.vsp
+*.pidb
+*.svclog
+*.sdf
+*.opensdf
+*.v12.suo
+*.xproj
+*.vcxproj.user
+
+# 📦 NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+*.nuspec
+project.lock.json
+
+# 🧪 Testy i raporty
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# 🧠 Rider / Visual Studio / VS Code
+.idea/
+.vscode/
+.vs/
+*.DotSettings
+*.sln.docstates
+
+# 🖼️ Zasoby lokalne
+Resources/surface.txt
+Resources/*.txt
+Resources/*.csv
+Resources/*.json
+
+# 📁 Publikacja
+publish/
+*.publish.xml
+
+# 🔐 Hasła, konfiguracje lokalne
+appsettings.Local.json
+secrets.json
+
+# 🧪 Tymczasowe pliki użytkownika
+*.tmp
+*.bak
+*.swp
+*.orig
+
+# 📄 Pliki systemowe
+Thumbs.db
+Desktop.ini
+.DS_Store
+
