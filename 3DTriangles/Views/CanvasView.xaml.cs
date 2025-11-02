@@ -83,7 +83,7 @@ namespace BezierVisualizer.Views
                     }
                 }
 
-// Rysuj punkty
+                // Rysuj punkty
                 for (int i = 0; i < 4; i++)
                 {
                     for (int j = 0; j < 4; j++)
@@ -101,7 +101,7 @@ namespace BezierVisualizer.Views
                     }
                 }
 
-// Rysuj linie wzdłuż wierszy
+                // Rysuj linie wzdłuż wierszy
                 for (int i = 0; i < 4; i++)
                 {
                     for (int j = 0; j < 3; j++)
@@ -121,7 +121,7 @@ namespace BezierVisualizer.Views
                     }
                 }
 
-// Rysuj linie wzdłuż kolumn
+                // Rysuj linie wzdłuż kolumn
                 for (int j = 0; j < 4; j++)
                 {
                     for (int i = 0; i < 3; i++)
@@ -145,7 +145,10 @@ namespace BezierVisualizer.Views
 
             if (_showFilledTriangles)
             {
-                // ⏳ Rasteryzacja trójkątów — do zaimplementowania później
+                foreach (var tri in _triangles)
+                {
+                    RasterizeTriangle(tri, centerX, centerY);
+                }
             }
         }
 
@@ -159,5 +162,105 @@ namespace BezierVisualizer.Views
             _main = Window.GetWindow(this) as MainWindow;
             Draw();
         }
+        
+        private void RasterizeTriangle(Triangle tri, double centerX, double centerY)
+        {
+            // Rzutuj wierzchołki na 2D
+            var p0 = ToCanvas(tri.V0.PRot, centerX, centerY);
+            var p1 = ToCanvas(tri.V1.PRot, centerX, centerY);
+            var p2 = ToCanvas(tri.V2.PRot, centerX, centerY);
+
+            // Znajdź bounding box
+            int minY = (int)Math.Floor(Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
+            int maxY = (int)Math.Ceiling(Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
+
+            for (int y = minY; y <= maxY; y++)
+            {
+                List<double> xIntersections = new();
+
+                // Sprawdź przecięcia z każdą krawędzią
+                AddEdgeIntersection(p0, p1, y, xIntersections);
+                AddEdgeIntersection(p1, p2, y, xIntersections);
+                AddEdgeIntersection(p2, p0, y, xIntersections);
+
+                if (xIntersections.Count < 2) continue;
+
+                xIntersections.Sort();
+                int xStart = (int)Math.Floor(xIntersections[0]);
+                int xEnd = (int)Math.Ceiling(xIntersections[1]);
+
+                for (int x = xStart; x <= xEnd; x++)
+                {
+                    var pixel = new Point(x, y);
+                    var bary = ComputeBarycentric(pixel, p0, p1, p2);
+                    if (bary == null) continue;
+
+                    float l0 = bary.Value.X;
+                    float l1 = bary.Value.Y;
+                    float l2 = bary.Value.Z;
+
+                    // Interpoluj normalną
+                    Vector3 N = Vector3.Normalize(
+                        tri.V0.NRot * l0 + tri.V1.NRot * l1 + tri.V2.NRot * l2);
+
+                    // Interpoluj kolor obiektu (IO) — na razie stały
+                    Vector3 IO = new(1, 1, 1); // biały
+
+                    // Światło
+                    Vector3 L = Vector3.Normalize(new Vector3(0, 0, 1)); // kierunek do światła
+                    Vector3 V = new(0, 0, 1);
+                    Vector3 R = Vector3.Normalize(2 * Vector3.Dot(N, L) * N - L);
+
+                    float kd = 0.8f;
+                    float ks = 0.5f;
+                    int m = 20;
+                    Vector3 IL = new(1, 1, 1); // kolor światła
+
+                    float cosNL = MathF.Max(0, Vector3.Dot(N, L));
+                    float cosVR = MathF.Max(0, Vector3.Dot(V, R));
+                    float specular = MathF.Pow(cosVR, m);
+
+                    Vector3 I = kd * IL * IO * cosNL + ks * IL * IO * specular;
+
+                    byte r = (byte)Math.Min(255, I.X * 255);
+                    byte g = (byte)Math.Min(255, I.Y * 255);
+                    byte b = (byte)Math.Min(255, I.Z * 255);
+
+                    var rect = new Rectangle
+                    {
+                        Width = 1,
+                        Height = 1,
+                        Fill = new SolidColorBrush(Color.FromRgb(r, g, b))
+                    };
+                    Canvas.SetLeft(rect, x);
+                    Canvas.SetTop(rect, y);
+                    DrawCanvas.Children.Add(rect);
+                }
+            }
+        }
+        private void AddEdgeIntersection(Point a, Point b, int y, List<double> list)
+        {
+            if ((y < a.Y && y < b.Y) || (y > a.Y && y > b.Y) || (a.Y == b.Y)) return;
+
+            double t = (y - a.Y) / (b.Y - a.Y);
+            double x = a.X + t * (b.X - a.X);
+            list.Add(x);
+        }
+
+        private Vector3? ComputeBarycentric(Point p, Point a, Point b, Point c)
+        {
+            float denom = (float)((b.Y - c.Y) * (a.X - c.X) + (c.X - b.X) * (a.Y - c.Y));
+            if (Math.Abs(denom) < 1e-5) return null;
+
+            float l0 = (float)((b.Y - c.Y) * (p.X - c.X) + (c.X - b.X) * (p.Y - c.Y)) / denom;
+            float l1 = (float)((c.Y - a.Y) * (p.X - c.X) + (a.X - c.X) * (p.Y - c.Y)) / denom;
+            float l2 = 1 - l0 - l1;
+
+            if (l0 < 0 || l1 < 0 || l2 < 0) return null;
+
+            return new Vector3(l0, l1, l2);
+        }
+
+
     }
 }
