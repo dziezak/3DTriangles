@@ -51,7 +51,10 @@ namespace BezierVisualizer
                 triangles,
                 showBezierPolygon: ShowBezierPolygon.IsChecked == true,
                 showTriangleMesh: ShowTriangleMesh.IsChecked == true,
-                showFilledTriangles: ShowFilledTriangles.IsChecked == true
+                showFilledTriangles: ShowFilledTriangles.IsChecked == true,
+                kd: (float)KdSlider.Value,
+                ks: (float)KsSlider.Value,
+                m: (int)MSlider.Value
             );
         }
     }

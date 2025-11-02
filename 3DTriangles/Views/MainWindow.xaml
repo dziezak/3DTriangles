@@ -4,13 +4,17 @@
         xmlns:views="clr-namespace:BezierVisualizer.Views"
         Title="Bezier Visualizer" Height="700" Width="1000">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />         <!-- Canvas -->
+            <ColumnDefinition Width="Auto" />      <!-- Panel boczny -->
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>         <!-- Pasek górny -->
+            <RowDefinition Height="*"/>            <!-- Obszar rysowania -->
         </Grid.RowDefinitions>
 
-        <!-- Panel sterowania -->
-        <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0">
+        <!-- Panel sterowania (górny pasek) -->
+        <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0" Grid.ColumnSpan="2">
             <TextBlock Text="Alfa:" VerticalAlignment="Center" Margin="0,0,5,0"/>
             <Slider x:Name="AlfaSlider" Minimum="0" Maximum="360" Width="150" ValueChanged="Slider_ValueChanged"/>
 
@@ -26,6 +30,18 @@
         </StackPanel>
 
         <!-- Obszar rysowania -->
-        <views:CanvasView x:Name="CanvasArea" Grid.Row="1"/>
+        <views:CanvasView x:Name="CanvasArea" Grid.Row="1" Grid.Column="0"/>
+
+        <!-- Panel boczny z suwakami oświetlenia -->
+        <StackPanel Grid.Row="1" Grid.Column="1" Margin="10" VerticalAlignment="Top">
+            <TextBlock Text="kd (rozproszenie)" Margin="0,0,0,5"/>
+            <Slider x:Name="KdSlider" Minimum="0" Maximum="1" Value="0.8" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
+
+            <TextBlock Text="ks (zwierciadlane)" Margin="0,10,0,5"/>
+            <Slider x:Name="KsSlider" Minimum="0" Maximum="1" Value="0.5" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
+
+            <TextBlock Text="m (połysk)" Margin="0,10,0,5"/>
+            <Slider x:Name="MSlider" Minimum="1" Maximum="100" Value="20" TickFrequency="1" Width="120" ValueChanged="Slider_ValueChanged"/>
+        </StackPanel>
     </Grid>
 </Window>

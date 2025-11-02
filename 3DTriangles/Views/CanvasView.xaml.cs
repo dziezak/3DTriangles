@@ -16,6 +16,11 @@ namespace BezierVisualizer.Views
         private bool _showTriangleMesh;
         private bool _showFilledTriangles;
         private MainWindow _main;
+        
+        private float _kd;
+        private float _ks;
+        private int _m;
+
 
         public CanvasView()
         {
@@ -23,12 +28,16 @@ namespace BezierVisualizer.Views
             Loaded += UserControl_Loaded;
         }
 
-        public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh, bool showFilledTriangles)
+        public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh, bool showFilledTriangles, float kd, float ks, int m)
         {
             _triangles = triangles;
             _showBezierPolygon = showBezierPolygon;
             _showTriangleMesh = showTriangleMesh;
             _showFilledTriangles = showFilledTriangles;
+            _kd = kd;
+            _ks = ks;
+            _m = m;
+
 
             Draw();
         }
@@ -211,9 +220,9 @@ namespace BezierVisualizer.Views
                     Vector3 V = new(0, 0, 1);
                     Vector3 R = Vector3.Normalize(2 * Vector3.Dot(N, L) * N - L);
 
-                    float kd = 0.8f;
-                    float ks = 0.5f;
-                    int m = 20;
+                    float kd = _kd;
+                    float ks = _ks;
+                    int m = _m;
                     Vector3 IL = new(1, 1, 1); // kolor światła
 
                     float cosNL = MathF.Max(0, Vector3.Dot(N, L));
