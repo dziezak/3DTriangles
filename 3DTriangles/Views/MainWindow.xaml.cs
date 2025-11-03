@@ -17,18 +17,31 @@ namespace BezierVisualizer
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            UpdateSliderLabels();
             RedrawScene();
         }
 
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!IsLoaded) return;
+            UpdateSliderLabels();
             RedrawScene();
         }
 
         private void Checkbox_Changed(object sender, RoutedEventArgs e)
         {
             RedrawScene();
+        }
+
+        private void UpdateSliderLabels()
+        {
+            AlfaValue.Text = ((int)AlfaSlider.Value).ToString();
+            BetaValue.Text = ((int)BetaSlider.Value).ToString();
+            ResolutionValue.Text = ((int)ResolutionSlider.Value).ToString();
+
+            KdValue.Text = KdSlider.Value.ToString("0.00");
+            KsValue.Text = KsSlider.Value.ToString("0.00");
+            MValue.Text = MSlider.Value.ToString("0.00");
         }
 
         private void RedrawScene()

@@ -15,15 +15,28 @@
 
         <!-- Panel sterowania (górny pasek) -->
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0" Grid.ColumnSpan="2">
-            <TextBlock Text="Alfa:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <Slider x:Name="AlfaSlider" Minimum="0" Maximum="360" Width="150" ValueChanged="Slider_ValueChanged"/>
+            <!-- Alfa -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Alfa:" Margin="0,0,5,0"/>
+                <Slider x:Name="AlfaSlider" Minimum="0" Maximum="360" Width="150" ValueChanged="Slider_ValueChanged"/>
+                <TextBlock x:Name="AlfaValue" Width="40" Margin="5,0,0,0"/>
+            </StackPanel>
 
-            <TextBlock Text="Beta:" VerticalAlignment="Center" Margin="20,0,5,0"/>
-            <Slider x:Name="BetaSlider" Minimum="0" Maximum="360" Width="150" ValueChanged="Slider_ValueChanged"/>
+            <!-- Beta -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                <TextBlock Text="Beta:" Margin="0,0,5,0"/>
+                <Slider x:Name="BetaSlider" Minimum="0" Maximum="360" Width="150" ValueChanged="Slider_ValueChanged"/>
+                <TextBlock x:Name="BetaValue" Width="40" Margin="5,0,0,0"/>
+            </StackPanel>
 
-            <TextBlock Text="Resolution:" VerticalAlignment="Center" Margin="20,0,5,0"/>
-            <Slider x:Name="ResolutionSlider" Minimum="2" Maximum="50" Width="150" ValueChanged="Slider_ValueChanged" Value="10"/>
-            
+            <!-- Resolution -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                <TextBlock Text="Resolution:" Margin="0,0,5,0"/>
+                <Slider x:Name="ResolutionSlider" Minimum="2" Maximum="50" Width="150" ValueChanged="Slider_ValueChanged" Value="10"/>
+                <TextBlock x:Name="ResolutionValue" Width="40" Margin="5,0,0,0"/>
+            </StackPanel>
+
+            <!-- Checkboxy -->
             <CheckBox x:Name="ShowBezierPolygon" Content="Wielobok Beziera" Margin="20,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowTriangleMesh" Content="Siatka trójkątów" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowFilledTriangles" Content="Wypełnione trójkąty" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
@@ -34,14 +47,32 @@
 
         <!-- Panel boczny z suwakami oświetlenia -->
         <StackPanel Grid.Row="1" Grid.Column="1" Margin="10" VerticalAlignment="Top">
-            <TextBlock Text="kd (rozproszenie)" Margin="0,0,0,5"/>
-            <Slider x:Name="KdSlider" Minimum="0" Maximum="1" Value="0.8" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
+            <!-- kd -->
+            <StackPanel Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="kd (rozproszenie)" />
+                    <TextBlock x:Name="KdValue" Margin="10,0,0,0"/>
+                </StackPanel>
+                <Slider x:Name="KdSlider" Minimum="0" Maximum="1" Value="0.8" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
+            </StackPanel>
 
-            <TextBlock Text="ks (zwierciadlane)" Margin="0,10,0,5"/>
-            <Slider x:Name="KsSlider" Minimum="0" Maximum="1" Value="0.5" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
+            <!-- ks -->
+            <StackPanel Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="ks (zwierciadlane)" />
+                    <TextBlock x:Name="KsValue" Margin="10,0,0,0"/>
+                </StackPanel>
+                <Slider x:Name="KsSlider" Minimum="0" Maximum="1" Value="0.5" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
+            </StackPanel>
 
-            <TextBlock Text="m (połysk)" Margin="0,10,0,5"/>
-            <Slider x:Name="MSlider" Minimum="1" Maximum="100" Value="20" TickFrequency="1" Width="120" ValueChanged="Slider_ValueChanged"/>
+            <!-- m -->
+            <StackPanel Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="m (połysk)" />
+                    <TextBlock x:Name="MValue" Margin="10,0,0,0"/>
+                </StackPanel>
+                <Slider x:Name="MSlider" Minimum="1" Maximum="100" Value="20" TickFrequency="1" Width="120" ValueChanged="Slider_ValueChanged"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>
