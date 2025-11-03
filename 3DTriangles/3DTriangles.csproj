@@ -15,6 +15,9 @@
 
   <ItemGroup>
     <None Remove="Resources\surface.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Resources\surface.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
