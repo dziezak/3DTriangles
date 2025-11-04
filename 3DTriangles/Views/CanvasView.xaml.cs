@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,13 +26,30 @@ namespace BezierVisualizer.Views
 
         private WriteableBitmap _bitmap;
 
+        private bool _useNormalMap;
+        private BitmapImage _normalMap;
+
         public CanvasView()
         {
             InitializeComponent();
             Loaded += UserControl_Loaded;
+
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "john-cena.bmp");
+            if (File.Exists(path))
+            {
+                _normalMap = new BitmapImage(new Uri(path, UriKind.Absolute));
+                Console.WriteLine("Wczytano mapę normalnych: John Cena");
+            }
+            else
+            {
+                Console.WriteLine("Nie udało się znaleźć John Ceny, bo jest niewidzailny");
+                _normalMap = new BitmapImage();
+            }
         }
 
-        public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh, bool showFilledTriangles, float kd, float ks, int m)
+
+        public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh,
+            bool showFilledTriangles, float kd, float ks, int m, bool UseNormalMap)
         {
             _triangles = triangles;
             _showBezierPolygon = showBezierPolygon;
@@ -40,6 +58,7 @@ namespace BezierVisualizer.Views
             _kd = kd;
             _ks = ks;
             _m = m;
+            _useNormalMap = UseNormalMap;
 
             Draw();
         }
@@ -222,6 +241,48 @@ namespace BezierVisualizer.Views
                     float l2 = bary.Value.Z;
 
                     Vector3 N = Vector3.Normalize(tri.V0.NRot * l0 + tri.V1.NRot * l1 + tri.V2.NRot * l2);
+                    if (_useNormalMap)
+                    {
+                        // Interpoluj UV (zakładamy że V0.UV, V1.UV, V2.UV istnieją)
+                        Vector2 uv = new Vector2(tri.V0.U, tri.V0.V) * l0 +
+                                     new Vector2(tri.V1.U, tri.V1.V) * l1 +
+                                     new Vector2(tri.V2.U, tri.V2.V) * l2;
+
+                        
+
+                        int texX = (int)(uv.X * _normalMap.PixelWidth);
+                        int texY = (int)(uv.Y * _normalMap.PixelHeight);
+
+                        if (texX >= 0 && texX < _normalMap.PixelWidth && texY >= 0 && texY < _normalMap.PixelHeight)
+                        {
+                            var cb = new CroppedBitmap(_normalMap, new Int32Rect(texX, texY, 1, 1));
+                            byte[] rgb = new byte[4];
+                            cb.CopyPixels(rgb, 4, 0);
+
+                            Vector3 Ntex = new(
+                                (rgb[2] / 255f) * 2 - 1, // R → X
+                                (rgb[1] / 255f) * 2 - 1, // G → Y
+                                (rgb[0] / 255f)          // B → Z (0.5–1.0)
+                            );
+
+                            // Oblicz Pu, Pv
+                            Vector3 Pu = Vector3.Normalize(tri.V1.PRot - tri.V0.PRot);
+                            Vector3 Pv = Vector3.Normalize(tri.V2.PRot - tri.V0.PRot);
+                            Vector3 Nsurf = N;
+
+                            Matrix4x4 M = new(
+                                Pu.X, Pv.X, Nsurf.X, 0,
+                                Pu.Y, Pv.Y, Nsurf.Y, 0,
+                                Pu.Z, Pv.Z, Nsurf.Z, 0,
+                                0,    0,    0,       1
+                            );
+
+                            N = Vector3.TransformNormal(Ntex, M);
+                            N = Vector3.Normalize(N);
+                        }
+                    }
+                    
+                    
                     Vector3 IO = new(1, 1, 1);
                     Vector3 L = Vector3.Normalize(new Vector3(0, 0, 1));
                     Vector3 V = new(0, 0, 1);

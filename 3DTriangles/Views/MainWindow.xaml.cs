@@ -67,7 +67,8 @@ namespace BezierVisualizer
                 showFilledTriangles: ShowFilledTriangles.IsChecked == true,
                 kd: (float)KdSlider.Value,
                 ks: (float)KsSlider.Value,
-                m: (int)MSlider.Value
+                m: (int)MSlider.Value,
+                UseNormalMap: UseNormalMap.IsChecked == true
             );
         }
     }
