@@ -30,12 +30,15 @@ namespace BezierVisualizer.Views
         private BitmapImage _normalMap;
         private byte[] _normalMapBytes;
         private int _normalMapStride;
-
+        
+        private ScaleTransform _scale = new ScaleTransform(1.0, 1.0);
 
         public CanvasView()
         {
             InitializeComponent();
             Loaded += UserControl_Loaded;
+            PreviewMouseWheel += CanvasView_MouseWheel;
+
 
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "john-cena.bmp");
             if (File.Exists(path))
@@ -58,6 +61,14 @@ namespace BezierVisualizer.Views
             }
 
         }
+        
+        private void CanvasView_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            double zoomFactor = e.Delta > 0 ? 1.1 : 0.9;
+            _scale.ScaleX *= zoomFactor;
+            _scale.ScaleY *= zoomFactor;
+        }
+
 
 
         public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh,
@@ -82,122 +93,126 @@ namespace BezierVisualizer.Views
         }
 
         private void Draw()
+{
+    if (ActualWidth <= 0 || ActualHeight <= 0 || _triangles == null)
+        return;
+
+    double centerX = ActualWidth / 2;
+    double centerY = ActualHeight / 2;
+
+    int width = (int)ActualWidth;
+    int height = (int)ActualHeight;
+    _bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
+
+    // --- WYPEŁNIANIE TRÓJKĄTÓW ---
+    if (_showFilledTriangles)
+    {
+        _bitmap.Lock();
+        unsafe
         {
-            if (ActualWidth <= 0 || ActualHeight <= 0 || _triangles == null)
-                return;
+            IntPtr pBackBuffer = _bitmap.BackBuffer;
+            int stride = _bitmap.BackBufferStride;
+            byte* pixels = (byte*)pBackBuffer;
 
-            double centerX = ActualWidth / 2;
-            double centerY = ActualHeight / 2;
-
-            int width = (int)ActualWidth;
-            int height = (int)ActualHeight;
-            _bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
-
-            // --- WYPEŁNIANIE TRÓJKĄTÓW ---
-            if (_showFilledTriangles)
+            foreach (var tri in _triangles)
             {
-                _bitmap.Lock();
-                unsafe
-                {
-                    IntPtr pBackBuffer = _bitmap.BackBuffer;
-                    int stride = _bitmap.BackBufferStride;
-                    byte* pixels = (byte*)pBackBuffer;
-
-                    foreach (var tri in _triangles)
-                    {
-                        RasterizeTriangle(tri, centerX, centerY, pixels, stride, width, height);
-                    }
-                }
-                _bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
-                _bitmap.Unlock();
-            }
-
-            var image = new Image
-            {
-                Source = _bitmap,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top,
-                Stretch = Stretch.None
-            };
-
-            // --- RYSOWANIE SIATKI I PUNKTÓW ---
-            if (_showTriangleMesh || _showBezierPolygon)
-            {
-                var overlay = new Canvas();
-
-                if (_showTriangleMesh)
-                {
-                    foreach (var tri in _triangles)
-                    {
-                        var poly = new System.Windows.Shapes.Polygon
-                        {
-                            Stroke = Brushes.White,
-                            StrokeThickness = 0.5,
-                            Fill = Brushes.Transparent,
-                            Points = new PointCollection
-                            {
-                                ToCanvas(tri.V0.PRot, centerX, centerY),
-                                ToCanvas(tri.V1.PRot, centerX, centerY),
-                                ToCanvas(tri.V2.PRot, centerX, centerY)
-                            }
-                        };
-                        overlay.Children.Add(poly);
-                    }
-                }
-
-                if (_showBezierPolygon)
-                {
-                    float alfa = (float)_main.AlfaSlider.Value;
-                    float beta = (float)_main.BetaSlider.Value;
-
-                    Matrix4x4 rotX = Matrix4x4.CreateRotationX(MathF.PI * alfa / 180f);
-                    Matrix4x4 rotZ = Matrix4x4.CreateRotationZ(MathF.PI * beta / 180f);
-                    Matrix4x4 rot = rotZ * rotX;
-
-                    Vector3[,] grid = new Vector3[4, 4];
-                    var rawPoints = MeshBuilder.GetControlPolygon();
-                    int index = 0;
-                    for (int i = 0; i < 4; i++)
-                        for (int j = 0; j < 4; j++)
-                            grid[i, j] = Vector3.Transform(rawPoints[index++], rot);
-
-                    //punkty kontrolne
-                    for (int i = 0; i < 4; i++)
-                        for (int j = 0; j < 4; j++)
-                        {
-                            var p = grid[i, j];
-                            var ellipse = new System.Windows.Shapes.Ellipse
-                            {
-                                Width = 4,
-                                Height = 4,
-                                Fill = Brushes.Red
-                            };
-                            Canvas.SetLeft(ellipse, centerX + p.X * 100 - 2);
-                            Canvas.SetTop(ellipse, centerY - p.Y * 100 - 2);
-                            overlay.Children.Add(ellipse);
-                        }
-
-                    //linie wierszy
-                    for (int i = 0; i < 4; i++)
-                        for (int j = 0; j < 3; j++)
-                            overlay.Children.Add(CreateLine(grid[i, j], grid[i, j + 1], centerX, centerY));
-
-                    //linie kolumn
-                    for (int j = 0; j < 4; j++)
-                        for (int i = 0; i < 3; i++)
-                            overlay.Children.Add(CreateLine(grid[i, j], grid[i + 1, j], centerX, centerY));
-                }
-
-                Content = new Grid
-                {
-                    Children = { image, overlay }
-                };
-            }
-            else
-            {
-                Content = image;
+                RasterizeTriangle(tri, centerX, centerY, pixels, stride, width, height);
             }
         }
+        _bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
+        _bitmap.Unlock();
+    }
+
+    var image = new Image
+    {
+        Source = _bitmap,
+        HorizontalAlignment = HorizontalAlignment.Left,
+        VerticalAlignment = VerticalAlignment.Top,
+        Stretch = Stretch.None
+    };
+
+    var grid = new Grid();
+    grid.Children.Add(image);
+
+    // --- RYSOWANIE SIATKI I PUNKTÓW ---
+    if (_showTriangleMesh || _showBezierPolygon)
+    {
+        var overlay = new Canvas();
+
+        if (_showTriangleMesh)
+        {
+            foreach (var tri in _triangles)
+            {
+                var poly = new System.Windows.Shapes.Polygon
+                {
+                    Stroke = Brushes.White,
+                    StrokeThickness = 0.5,
+                    Fill = Brushes.Transparent,
+                    Points = new PointCollection
+                    {
+                        ToCanvas(tri.V0.PRot, centerX, centerY),
+                        ToCanvas(tri.V1.PRot, centerX, centerY),
+                        ToCanvas(tri.V2.PRot, centerX, centerY)
+                    }
+                };
+                overlay.Children.Add(poly);
+            }
+        }
+
+        if (_showBezierPolygon)
+        {
+            float alfa = (float)_main.AlfaSlider.Value;
+            float beta = (float)_main.BetaSlider.Value;
+
+            Matrix4x4 rotX = Matrix4x4.CreateRotationX(MathF.PI * alfa / 180f);
+            Matrix4x4 rotZ = Matrix4x4.CreateRotationZ(MathF.PI * beta / 180f);
+            Matrix4x4 rot = rotZ * rotX;
+
+            Vector3[,] gridPoints = new Vector3[4, 4];
+            var rawPoints = MeshBuilder.GetControlPolygon();
+            int index = 0;
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                    gridPoints[i, j] = Vector3.Transform(rawPoints[index++], rot);
+
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                {
+                    var p = gridPoints[i, j];
+                    var ellipse = new System.Windows.Shapes.Ellipse
+                    {
+                        Width = 4,
+                        Height = 4,
+                        Fill = Brushes.Red
+                    };
+                    Canvas.SetLeft(ellipse, centerX + p.X * 100 - 2);
+                    Canvas.SetTop(ellipse, centerY - p.Y * 100 - 2);
+                    overlay.Children.Add(ellipse);
+                }
+
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 3; j++)
+                    overlay.Children.Add(CreateLine(gridPoints[i, j], gridPoints[i, j + 1], centerX, centerY));
+
+            for (int j = 0; j < 4; j++)
+                for (int i = 0; i < 3; i++)
+                    overlay.Children.Add(CreateLine(gridPoints[i, j], gridPoints[i + 1, j], centerX, centerY));
+        }
+
+        grid.Children.Add(overlay);
+    }
+
+    // --- OPAKUJ CAŁOŚĆ W TRANSFORMACJĘ SKALUJĄCĄ ---
+    var zoomContainer = new Grid
+    {
+        RenderTransform = _scale,
+        RenderTransformOrigin = new Point(0.5, 0.5),
+        Children = { grid }
+    };
+
+    Content = zoomContainer;
+}
+
 
         private System.Windows.Shapes.Line CreateLine(Vector3 p1, Vector3 p2, double cx, double cy)
         {
