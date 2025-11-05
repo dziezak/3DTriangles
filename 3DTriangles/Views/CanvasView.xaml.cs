@@ -93,125 +93,125 @@ namespace BezierVisualizer.Views
         }
 
         private void Draw()
-{
-    if (ActualWidth <= 0 || ActualHeight <= 0 || _triangles == null)
-        return;
-
-    double centerX = ActualWidth / 2;
-    double centerY = ActualHeight / 2;
-
-    int width = (int)ActualWidth;
-    int height = (int)ActualHeight;
-    _bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
-
-    // --- WYPEŁNIANIE TRÓJKĄTÓW ---
-    if (_showFilledTriangles)
-    {
-        _bitmap.Lock();
-        unsafe
         {
-            IntPtr pBackBuffer = _bitmap.BackBuffer;
-            int stride = _bitmap.BackBufferStride;
-            byte* pixels = (byte*)pBackBuffer;
+            if (ActualWidth <= 0 || ActualHeight <= 0 || _triangles == null)
+                return;
 
-            foreach (var tri in _triangles)
+            double centerX = ActualWidth / 2;
+            double centerY = ActualHeight / 2;
+
+            int width = (int)ActualWidth;
+            int height = (int)ActualHeight;
+            _bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
+
+            // --- WYPEŁNIANIE TRÓJKĄTÓW ---
+            if (_showFilledTriangles)
             {
-                RasterizeTriangle(tri, centerX, centerY, pixels, stride, width, height);
-            }
-        }
-        _bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
-        _bitmap.Unlock();
-    }
-
-    var image = new Image
-    {
-        Source = _bitmap,
-        HorizontalAlignment = HorizontalAlignment.Left,
-        VerticalAlignment = VerticalAlignment.Top,
-        Stretch = Stretch.None
-    };
-
-    var grid = new Grid();
-    grid.Children.Add(image);
-
-    // --- RYSOWANIE SIATKI I PUNKTÓW ---
-    if (_showTriangleMesh || _showBezierPolygon)
-    {
-        var overlay = new Canvas();
-
-        if (_showTriangleMesh)
-        {
-            foreach (var tri in _triangles)
-            {
-                var poly = new System.Windows.Shapes.Polygon
+                _bitmap.Lock();
+                unsafe
                 {
-                    Stroke = Brushes.White,
-                    StrokeThickness = 0.5,
-                    Fill = Brushes.Transparent,
-                    Points = new PointCollection
+                    IntPtr pBackBuffer = _bitmap.BackBuffer;
+                    int stride = _bitmap.BackBufferStride;
+                    byte* pixels = (byte*)pBackBuffer;
+
+                    foreach (var tri in _triangles)
                     {
-                        ToCanvas(tri.V0.PRot, centerX, centerY),
-                        ToCanvas(tri.V1.PRot, centerX, centerY),
-                        ToCanvas(tri.V2.PRot, centerX, centerY)
+                        RasterizeTriangle(tri, centerX, centerY, pixels, stride, width, height);
                     }
-                };
-                overlay.Children.Add(poly);
+                }
+                _bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
+                _bitmap.Unlock();
             }
-        }
 
-        if (_showBezierPolygon)
-        {
-            float alfa = (float)_main.AlfaSlider.Value;
-            float beta = (float)_main.BetaSlider.Value;
+            var image = new Image
+            {
+                Source = _bitmap,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Stretch = Stretch.None
+            };
 
-            Matrix4x4 rotX = Matrix4x4.CreateRotationX(MathF.PI * alfa / 180f);
-            Matrix4x4 rotZ = Matrix4x4.CreateRotationZ(MathF.PI * beta / 180f);
-            Matrix4x4 rot = rotZ * rotX;
+            var grid = new Grid();
+            grid.Children.Add(image);
 
-            Vector3[,] gridPoints = new Vector3[4, 4];
-            var rawPoints = MeshBuilder.GetControlPolygon();
-            int index = 0;
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 4; j++)
-                    gridPoints[i, j] = Vector3.Transform(rawPoints[index++], rot);
+            // --- RYSOWANIE SIATKI I PUNKTÓW ---
+            if (_showTriangleMesh || _showBezierPolygon)
+            {
+                var overlay = new Canvas();
 
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 4; j++)
+                if (_showTriangleMesh)
                 {
-                    var p = gridPoints[i, j];
-                    var ellipse = new System.Windows.Shapes.Ellipse
+                    foreach (var tri in _triangles)
                     {
-                        Width = 4,
-                        Height = 4,
-                        Fill = Brushes.Red
-                    };
-                    Canvas.SetLeft(ellipse, centerX + p.X * 100 - 2);
-                    Canvas.SetTop(ellipse, centerY - p.Y * 100 - 2);
-                    overlay.Children.Add(ellipse);
+                        var poly = new System.Windows.Shapes.Polygon
+                        {
+                            Stroke = Brushes.White,
+                            StrokeThickness = 0.5,
+                            Fill = Brushes.Transparent,
+                            Points = new PointCollection
+                            {
+                                ToCanvas(tri.V0.PRot, centerX, centerY),
+                                ToCanvas(tri.V1.PRot, centerX, centerY),
+                                ToCanvas(tri.V2.PRot, centerX, centerY)
+                            }
+                        };
+                        overlay.Children.Add(poly);
+                    }
                 }
 
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 3; j++)
-                    overlay.Children.Add(CreateLine(gridPoints[i, j], gridPoints[i, j + 1], centerX, centerY));
+                if (_showBezierPolygon)
+                {
+                    float alfa = (float)_main.AlfaSlider.Value;
+                    float beta = (float)_main.BetaSlider.Value;
 
-            for (int j = 0; j < 4; j++)
-                for (int i = 0; i < 3; i++)
-                    overlay.Children.Add(CreateLine(gridPoints[i, j], gridPoints[i + 1, j], centerX, centerY));
+                    Matrix4x4 rotX = Matrix4x4.CreateRotationX(MathF.PI * alfa / 180f);
+                    Matrix4x4 rotZ = Matrix4x4.CreateRotationZ(MathF.PI * beta / 180f);
+                    Matrix4x4 rot = rotZ * rotX;
+
+                    Vector3[,] gridPoints = new Vector3[4, 4];
+                    var rawPoints = MeshBuilder.GetControlPolygon();
+                    int index = 0;
+                    for (int i = 0; i < 4; i++)
+                        for (int j = 0; j < 4; j++)
+                            gridPoints[i, j] = Vector3.Transform(rawPoints[index++], rot);
+
+                    for (int i = 0; i < 4; i++)
+                        for (int j = 0; j < 4; j++)
+                        {
+                            var p = gridPoints[i, j];
+                            var ellipse = new System.Windows.Shapes.Ellipse
+                            {
+                                Width = 4,
+                                Height = 4,
+                                Fill = Brushes.Red
+                            };
+                            Canvas.SetLeft(ellipse, centerX + p.X * 100 - 2);
+                            Canvas.SetTop(ellipse, centerY - p.Y * 100 - 2);
+                            overlay.Children.Add(ellipse);
+                        }
+
+                    for (int i = 0; i < 4; i++)
+                        for (int j = 0; j < 3; j++)
+                            overlay.Children.Add(CreateLine(gridPoints[i, j], gridPoints[i, j + 1], centerX, centerY));
+
+                    for (int j = 0; j < 4; j++)
+                        for (int i = 0; i < 3; i++)
+                            overlay.Children.Add(CreateLine(gridPoints[i, j], gridPoints[i + 1, j], centerX, centerY));
+                }
+
+                grid.Children.Add(overlay);
+            }
+
+            // --- OPAKUJ CAŁOŚĆ W TRANSFORMACJĘ SKALUJĄCĄ ---
+            var zoomContainer = new Grid
+            {
+                RenderTransform = _scale,
+                RenderTransformOrigin = new Point(0.5, 0.5),
+                Children = { grid }
+            };
+
+            Content = zoomContainer;
         }
-
-        grid.Children.Add(overlay);
-    }
-
-    // --- OPAKUJ CAŁOŚĆ W TRANSFORMACJĘ SKALUJĄCĄ ---
-    var zoomContainer = new Grid
-    {
-        RenderTransform = _scale,
-        RenderTransformOrigin = new Point(0.5, 0.5),
-        Children = { grid }
-    };
-
-    Content = zoomContainer;
-}
 
 
         private System.Windows.Shapes.Line CreateLine(Vector3 p1, Vector3 p2, double cx, double cy)
@@ -233,66 +233,66 @@ namespace BezierVisualizer.Views
         }
 
         private unsafe void RasterizeTriangle(Triangle tri, double centerX, double centerY, byte* pixels, int stride, int width, int height)
-{
-    var p0 = ToCanvas(tri.V0.PRot, centerX, centerY);
-    var p1 = ToCanvas(tri.V1.PRot, centerX, centerY);
-    var p2 = ToCanvas(tri.V2.PRot, centerX, centerY);
-
-    int minY = (int)Math.Floor(Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
-    int maxY = (int)Math.Ceiling(Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
-
-    int bytesPerPixel = 4; // zakładamy BGRA32 — ustawione przy ładowaniu
-
-    for (int y = minY; y <= maxY; y++)
-    {
-        if (y < 0 || y >= height) continue;
-
-        List<double> xIntersections = new();
-        AddEdgeIntersection(p0, p1, y, xIntersections);
-        AddEdgeIntersection(p1, p2, y, xIntersections);
-        AddEdgeIntersection(p2, p0, y, xIntersections);
-
-        if (xIntersections.Count < 2) continue;
-        xIntersections.Sort();
-        int xStart = (int)Math.Floor(xIntersections[0]);
-        int xEnd = (int)Math.Ceiling(xIntersections[1]);
-
-        for (int x = xStart; x <= xEnd; x++)
         {
-            if (x < 0 || x >= width) continue;
+            var p0 = ToCanvas(tri.V0.PRot, centerX, centerY);
+            var p1 = ToCanvas(tri.V1.PRot, centerX, centerY);
+            var p2 = ToCanvas(tri.V2.PRot, centerX, centerY);
 
-            var pixel = new Point(x, y);
-            var bary = ComputeBarycentric(pixel, p0, p1, p2);
-            if (bary == null) continue;
+            int minY = (int)Math.Floor(Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
+            int maxY = (int)Math.Ceiling(Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
 
-            float l0 = bary.Value.X;
-            float l1 = bary.Value.Y;
-            float l2 = bary.Value.Z;
+            int bytesPerPixel = 4; // zakładamy BGRA32 — ustawione przy ładowaniu
 
-            // interpolowana normalna powierzchni
-            Vector3 N = Vector3.Normalize(tri.V0.NRot * l0 + tri.V1.NRot * l1 + tri.V2.NRot * l2);
-
-            // domyślny kolor materiału (biały)
-            Vector3 IO = new(1, 1, 1);
-
-            // --- Sampling normal mapy + koloru z diffuse ---
-            if (_useNormalMap && _normalMap != null && _normalMapBytes != null && _normalMapStride > 0)
+            for (int y = minY; y <= maxY; y++)
             {
-                Vector2 uv =
-                    new Vector2(tri.V0.U, tri.V0.V) * l0 +
-                    new Vector2(tri.V1.U, tri.V1.V) * l1 +
-                    new Vector2(tri.V2.U, tri.V2.V) * l2;
+                if (y < 0 || y >= height) continue;
 
-                // konwersja UV -> współrzędne tekstury
-                int texX = (int)(uv.X * (_normalMap.PixelWidth - 1));
-                int texY = (int)((1 - uv.Y) * (_normalMap.PixelHeight - 1)); // inwersja Y jeśli tekstura odwrócona
+                List<double> xIntersections = new();
+                AddEdgeIntersection(p0, p1, y, xIntersections);
+                AddEdgeIntersection(p1, p2, y, xIntersections);
+                AddEdgeIntersection(p2, p0, y, xIntersections);
 
-                texX = Math.Clamp(texX, 0, _normalMap.PixelWidth - 1);
-                texY = Math.Clamp(texY, 0, _normalMap.PixelHeight - 1);
+                if (xIntersections.Count < 2) continue;
+                xIntersections.Sort();
+                int xStart = (int)Math.Floor(xIntersections[0]);
+                int xEnd = (int)Math.Ceiling(xIntersections[1]);
 
-                long texIndexLong = (long)texY * _normalMapStride + (long)texX * bytesPerPixel;
-                if (texIndexLong >= 0 && texIndexLong + bytesPerPixel <= _normalMapBytes.Length)
+                for (int x = xStart; x <= xEnd; x++)
                 {
+                    if (x < 0 || x >= width) continue;
+
+                    var pixel = new Point(x, y);
+                    var bary = ComputeBarycentric(pixel, p0, p1, p2);
+                    if (bary == null) continue;
+
+                    float l0 = bary.Value.X;
+                    float l1 = bary.Value.Y;
+                    float l2 = bary.Value.Z;
+
+                    // interpolowana normalna powierzchni
+                    Vector3 N = Vector3.Normalize(tri.V0.NRot * l0 + tri.V1.NRot * l1 + tri.V2.NRot * l2);
+
+                    // domyślny kolor materiału (biały)
+                    Vector3 IO = new(1, 1, 1);
+
+                    // --- Sampling normal mapy + koloru z diffuse ---
+                    if (_useNormalMap && _normalMap != null && _normalMapBytes != null && _normalMapStride > 0)
+                    {
+                        Vector2 uv =
+                            new Vector2(tri.V0.U, tri.V0.V) * l0 +
+                            new Vector2(tri.V1.U, tri.V1.V) * l1 +
+                            new Vector2(tri.V2.U, tri.V2.V) * l2;
+
+                        // konwersja UV -> współrzędne tekstury
+                        int texX = (int)(uv.X * (_normalMap.PixelWidth - 1));
+                        int texY = (int)((1 - uv.Y) * (_normalMap.PixelHeight - 1)); // inwersja Y jeśli tekstura odwrócona
+
+                        texX = Math.Clamp(texX, 0, _normalMap.PixelWidth - 1);
+                        texY = Math.Clamp(texY, 0, _normalMap.PixelHeight - 1);
+
+                        long texIndexLong = (long)texY * _normalMapStride + (long)texX * bytesPerPixel;
+                        if (texIndexLong >= 0 && texIndexLong + bytesPerPixel <= _normalMapBytes.Length)
+                        {
                     int texIndex = (int)texIndexLong;
 
                     byte bTex = _normalMapBytes[texIndex + 0];
