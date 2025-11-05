@@ -28,6 +28,9 @@ namespace BezierVisualizer.Views
 
         private bool _useNormalMap;
         private BitmapImage _normalMap;
+        private byte[] _normalMapBytes;
+        private int _normalMapStride;
+
 
         public CanvasView()
         {
@@ -45,6 +48,15 @@ namespace BezierVisualizer.Views
                 Console.WriteLine("Nie udało się znaleźć John Ceny, bo jest niewidzailny");
                 _normalMap = new BitmapImage();
             }
+            if (_normalMap != null)
+            {
+                int stride = _normalMap.PixelWidth * (_normalMap.Format.BitsPerPixel / 8);
+                _normalMapBytes = new byte[stride * _normalMap.PixelHeight];
+                _normalMap.CopyPixels(_normalMapBytes, stride, 0);
+                _normalMapStride = stride;
+                Console.WriteLine("Normal map loaded into memory buffer.");
+            }
+
         }
 
 
@@ -214,6 +226,8 @@ namespace BezierVisualizer.Views
     int minY = (int)Math.Floor(Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
     int maxY = (int)Math.Ceiling(Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
 
+    int bytesPerPixel = 4; // zakładamy BGRA32 — ustawione przy ładowaniu
+
     for (int y = minY; y <= maxY; y++)
     {
         if (y < 0 || y >= height) continue;
@@ -246,39 +260,61 @@ namespace BezierVisualizer.Views
             // domyślny kolor materiału (biały)
             Vector3 IO = new(1, 1, 1);
 
-            if (_useNormalMap && _normalMap != null)
+            // --- Sampling normal mapy + koloru z diffuse ---
+            if (_useNormalMap && _normalMap != null && _normalMapBytes != null && _normalMapStride > 0)
             {
-                Vector2 uv = new Vector2(tri.V0.U, tri.V0.V) * l0 +
-                             new Vector2(tri.V1.U, tri.V1.V) * l1 +
-                             new Vector2(tri.V2.U, tri.V2.V) * l2;
+                Vector2 uv =
+                    new Vector2(tri.V0.U, tri.V0.V) * l0 +
+                    new Vector2(tri.V1.U, tri.V1.V) * l1 +
+                    new Vector2(tri.V2.U, tri.V2.V) * l2;
 
-                int texX = (int)(uv.X * _normalMap.PixelWidth);
-                int texY = (int)(uv.Y * _normalMap.PixelHeight);
+                // konwersja UV -> współrzędne tekstury
+                int texX = (int)(uv.X * (_normalMap.PixelWidth - 1));
+                int texY = (int)((1 - uv.Y) * (_normalMap.PixelHeight - 1)); // inwersja Y jeśli tekstura odwrócona
 
-                if (texX >= 0 && texX < _normalMap.PixelWidth && texY >= 0 && texY < _normalMap.PixelHeight)
+                texX = Math.Clamp(texX, 0, _normalMap.PixelWidth - 1);
+                texY = Math.Clamp(texY, 0, _normalMap.PixelHeight - 1);
+
+                long texIndexLong = (long)texY * _normalMapStride + (long)texX * bytesPerPixel;
+                if (texIndexLong >= 0 && texIndexLong + bytesPerPixel <= _normalMapBytes.Length)
                 {
-                    var cb = new CroppedBitmap(_normalMap, new Int32Rect(texX, texY, 1, 1));
-                    byte[] rgb = new byte[4];
-                    cb.CopyPixels(rgb, 4, 0);
+                    int texIndex = (int)texIndexLong;
 
-                    // ✅ kolor materiału (diffuse)
-                    IO = new Vector3(rgb[2] / 255f, rgb[1] / 255f, rgb[0] / 255f);
+                    byte bTex = _normalMapBytes[texIndex + 0];
+                    byte gTex = _normalMapBytes[texIndex + 1];
+                    byte rTex = _normalMapBytes[texIndex + 2];
+                    // alpha pomijamy
 
-                    // ✅ wektor normalny z mapy
+                    // kolor materiału z bitmapy
+                    IO = new Vector3(rTex / 255f, gTex / 255f, bTex / 255f);
+
+                    // normal z normal mapy (zakładamy tangent space)
                     Vector3 Ntex = new(
-                        (rgb[2] / 255f) * 2f - 1f,
-                        (rgb[1] / 255f) * 2f - 1f,
-                        (rgb[0] / 255f) * 2f - 1f
+                        (rTex / 255f) * 2f - 1f,
+                        (gTex / 255f) * 2f - 1f,
+                        (bTex / 255f) * 2f - 1f
                     );
 
                     if (Ntex.Z < 0) Ntex.Z = -Ntex.Z;
                     Ntex = Vector3.Normalize(Ntex);
 
-                    // lokalna baza powierzchni
-                    Vector3 Pu = Vector3.Normalize(tri.V1.PRot - tri.V0.PRot);
-                    Vector3 Pv = Vector3.Normalize(tri.V2.PRot - tri.V0.PRot);
-                    Pv = Vector3.Normalize(Pv - Vector3.Dot(Pv, Pu) * Pu);
+                    // wylicz tangenta i bitangenta z różnic UV (gwarantuje poprawną orientację)
+                    Vector3 dp1 = tri.V1.PRot - tri.V0.PRot;
+                    Vector3 dp2 = tri.V2.PRot - tri.V0.PRot;
+                    Vector2 duv1 = new(tri.V1.U - tri.V0.U, tri.V1.V - tri.V0.V);
+                    Vector2 duv2 = new(tri.V2.U - tri.V0.U, tri.V2.V - tri.V0.V);
+
+                    float det = duv1.X * duv2.Y - duv1.Y * duv2.X;
+                    if (Math.Abs(det) < 1e-8f) det = 1e-8f; // uniknij dzielenia przez 0
+
+                    float invDet = 1.0f / det;
+                    Vector3 Pu = Vector3.Normalize((dp1 * duv2.Y - dp2 * duv1.Y) * invDet);
+                    Vector3 Pv = Vector3.Normalize((dp2 * duv1.X - dp1 * duv2.X) * invDet);
                     Vector3 Nsurf = Vector3.Normalize(N);
+                    if (Vector3.Dot(Vector3.Cross(Pu, Pv), Nsurf) < 0)
+                        Pu = -Pu;
+
+
 
                     Matrix4x4 M = new(
                         Pu.X, Pv.X, Nsurf.X, 0,
@@ -292,8 +328,8 @@ namespace BezierVisualizer.Views
                 }
             }
 
-            // --- oświetlenie ---
-            Vector3 L = Vector3.Normalize(new Vector3(0.5f, 0.3f, 1f));
+            // --- Oświetlenie (Phong) ---
+            Vector3 L = Vector3.Normalize(new Vector3(0.5f, 0.3f, 1f)); // kierunek światła
             Vector3 V = new(0, 0, 1);
             Vector3 R = Vector3.Normalize(2 * Vector3.Dot(N, L) * N - L);
 
@@ -304,7 +340,6 @@ namespace BezierVisualizer.Views
             Vector3 IL = new(1, 1, 1); // białe światło
             Vector3 I = _kd * IL * IO * cosNL + _ks * IL * IO * specular;
 
-            // konwersja do 8-bitów
             byte r = (byte)Math.Min(255, I.X * 255);
             byte g = (byte)Math.Min(255, I.Y * 255);
             byte b = (byte)Math.Min(255, I.Z * 255);
@@ -319,26 +354,26 @@ namespace BezierVisualizer.Views
 }
 
 
-            private void AddEdgeIntersection(Point a, Point b, int y, List<double> list)
-            {
-                if ((y < a.Y && y < b.Y) || (y > a.Y && y > b.Y) || (a.Y == b.Y)) return;
 
-                double t = (y - a.Y) / (b.Y - a.Y);
-                double x = a.X + t * (b.X - a.X);
-                list.Add(x);
-            }
+        private void AddEdgeIntersection(Point a, Point b, int y, List<double> list)
+        {
+            if ((y < a.Y && y < b.Y) || (y > a.Y && y > b.Y) || (a.Y == b.Y)) return;
 
-            private Vector3? ComputeBarycentric(Point p, Point a, Point b, Point c)
-            {
-                float denom = (float)((b.Y - c.Y) * (a.X - c.X) + (c.X - b.X) * (a.Y - c.Y));
-                if (Math.Abs(denom) < 1e-5) return null;
+            double t = (y - a.Y) / (b.Y - a.Y);
+            double x = a.X + t * (b.X - a.X);
+            list.Add(x);
+        }
 
-                float l0 = (float)((b.Y - c.Y) * (p.X - c.X) + (c.X - b.X) * (p.Y - c.Y)) / denom;
+        private Vector3? ComputeBarycentric(Point p, Point a, Point b, Point c)
+        {
+            float denom = (float)((b.Y - c.Y) * (a.X - c.X) + (c.X - b.X) * (a.Y - c.Y));
+            if (Math.Abs(denom) < 1e-5) return null;
+
+            float l0 = (float)((b.Y - c.Y) * (p.X - c.X) + (c.X - b.X) * (p.Y - c.Y)) / denom;
             float l1 = (float)((c.Y - a.Y) * (p.X - c.X) + (a.X - c.X) * (p.Y - c.Y)) / denom;
             float l2 = 1 - l0 - l1;
 
             if (l0 < 0 || l1 < 0 || l2 < 0) return null;
-
             return new Vector3(l0, l1, l2);
         }
     }
