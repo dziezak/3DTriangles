@@ -149,7 +149,7 @@ namespace BezierVisualizer.Views
                         for (int j = 0; j < 4; j++)
                             grid[i, j] = Vector3.Transform(rawPoints[index++], rot);
 
-                    // punkty kontrolne
+                    //punkty kontrolne
                     for (int i = 0; i < 4; i++)
                         for (int j = 0; j < 4; j++)
                         {
@@ -165,12 +165,12 @@ namespace BezierVisualizer.Views
                             overlay.Children.Add(ellipse);
                         }
 
-                    // linie wierszy
+                    //linie wierszy
                     for (int i = 0; i < 4; i++)
                         for (int j = 0; j < 3; j++)
                             overlay.Children.Add(CreateLine(grid[i, j], grid[i, j + 1], centerX, centerY));
 
-                    // linie kolumn
+                    //linie kolumn
                     for (int j = 0; j < 4; j++)
                         for (int i = 0; i < 3; i++)
                             overlay.Children.Add(CreateLine(grid[i, j], grid[i + 1, j], centerX, centerY));
@@ -206,123 +206,134 @@ namespace BezierVisualizer.Views
         }
 
         private unsafe void RasterizeTriangle(Triangle tri, double centerX, double centerY, byte* pixels, int stride, int width, int height)
+{
+    var p0 = ToCanvas(tri.V0.PRot, centerX, centerY);
+    var p1 = ToCanvas(tri.V1.PRot, centerX, centerY);
+    var p2 = ToCanvas(tri.V2.PRot, centerX, centerY);
+
+    int minY = (int)Math.Floor(Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
+    int maxY = (int)Math.Ceiling(Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
+
+    for (int y = minY; y <= maxY; y++)
+    {
+        if (y < 0 || y >= height) continue;
+
+        List<double> xIntersections = new();
+        AddEdgeIntersection(p0, p1, y, xIntersections);
+        AddEdgeIntersection(p1, p2, y, xIntersections);
+        AddEdgeIntersection(p2, p0, y, xIntersections);
+
+        if (xIntersections.Count < 2) continue;
+        xIntersections.Sort();
+        int xStart = (int)Math.Floor(xIntersections[0]);
+        int xEnd = (int)Math.Ceiling(xIntersections[1]);
+
+        for (int x = xStart; x <= xEnd; x++)
         {
-            var p0 = ToCanvas(tri.V0.PRot, centerX, centerY);
-            var p1 = ToCanvas(tri.V1.PRot, centerX, centerY);
-            var p2 = ToCanvas(tri.V2.PRot, centerX, centerY);
+            if (x < 0 || x >= width) continue;
 
-            int minY = (int)Math.Floor(Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
-            int maxY = (int)Math.Ceiling(Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
+            var pixel = new Point(x, y);
+            var bary = ComputeBarycentric(pixel, p0, p1, p2);
+            if (bary == null) continue;
 
-            for (int y = minY; y <= maxY; y++)
+            float l0 = bary.Value.X;
+            float l1 = bary.Value.Y;
+            float l2 = bary.Value.Z;
+
+            // interpolowana normalna powierzchni
+            Vector3 N = Vector3.Normalize(tri.V0.NRot * l0 + tri.V1.NRot * l1 + tri.V2.NRot * l2);
+
+            // domyślny kolor materiału (biały)
+            Vector3 IO = new(1, 1, 1);
+
+            if (_useNormalMap && _normalMap != null)
             {
-                if (y < 0 || y >= height) continue;
+                Vector2 uv = new Vector2(tri.V0.U, tri.V0.V) * l0 +
+                             new Vector2(tri.V1.U, tri.V1.V) * l1 +
+                             new Vector2(tri.V2.U, tri.V2.V) * l2;
 
-                List<double> xIntersections = new();
-                AddEdgeIntersection(p0, p1, y, xIntersections);
-                AddEdgeIntersection(p1, p2, y, xIntersections);
-                AddEdgeIntersection(p2, p0, y, xIntersections);
+                int texX = (int)(uv.X * _normalMap.PixelWidth);
+                int texY = (int)(uv.Y * _normalMap.PixelHeight);
 
-                if (xIntersections.Count < 2) continue;
-                xIntersections.Sort();
-                int xStart = (int)Math.Floor(xIntersections[0]);
-                int xEnd = (int)Math.Ceiling(xIntersections[1]);
-
-                for (int x = xStart; x <= xEnd; x++)
+                if (texX >= 0 && texX < _normalMap.PixelWidth && texY >= 0 && texY < _normalMap.PixelHeight)
                 {
-                    if (x < 0 || x >= width) continue;
+                    var cb = new CroppedBitmap(_normalMap, new Int32Rect(texX, texY, 1, 1));
+                    byte[] rgb = new byte[4];
+                    cb.CopyPixels(rgb, 4, 0);
 
-                    var pixel = new Point(x, y);
-                    var bary = ComputeBarycentric(pixel, p0, p1, p2);
-                    if (bary == null) continue;
+                    // ✅ kolor materiału (diffuse)
+                    IO = new Vector3(rgb[2] / 255f, rgb[1] / 255f, rgb[0] / 255f);
 
-                    float l0 = bary.Value.X;
-                    float l1 = bary.Value.Y;
-                    float l2 = bary.Value.Z;
+                    // ✅ wektor normalny z mapy
+                    Vector3 Ntex = new(
+                        (rgb[2] / 255f) * 2f - 1f,
+                        (rgb[1] / 255f) * 2f - 1f,
+                        (rgb[0] / 255f) * 2f - 1f
+                    );
 
-                    Vector3 N = Vector3.Normalize(tri.V0.NRot * l0 + tri.V1.NRot * l1 + tri.V2.NRot * l2);
-                    if (_useNormalMap)
-                    {
-                        // Interpoluj UV (zakładamy że V0.UV, V1.UV, V2.UV istnieją)
-                        Vector2 uv = new Vector2(tri.V0.U, tri.V0.V) * l0 +
-                                     new Vector2(tri.V1.U, tri.V1.V) * l1 +
-                                     new Vector2(tri.V2.U, tri.V2.V) * l2;
+                    if (Ntex.Z < 0) Ntex.Z = -Ntex.Z;
+                    Ntex = Vector3.Normalize(Ntex);
 
-                        
+                    // lokalna baza powierzchni
+                    Vector3 Pu = Vector3.Normalize(tri.V1.PRot - tri.V0.PRot);
+                    Vector3 Pv = Vector3.Normalize(tri.V2.PRot - tri.V0.PRot);
+                    Pv = Vector3.Normalize(Pv - Vector3.Dot(Pv, Pu) * Pu);
+                    Vector3 Nsurf = Vector3.Normalize(N);
 
-                        int texX = (int)(uv.X * _normalMap.PixelWidth);
-                        int texY = (int)(uv.Y * _normalMap.PixelHeight);
+                    Matrix4x4 M = new(
+                        Pu.X, Pv.X, Nsurf.X, 0,
+                        Pu.Y, Pv.Y, Nsurf.Y, 0,
+                        Pu.Z, Pv.Z, Nsurf.Z, 0,
+                        0,    0,    0,       1
+                    );
 
-                        if (texX >= 0 && texX < _normalMap.PixelWidth && texY >= 0 && texY < _normalMap.PixelHeight)
-                        {
-                            var cb = new CroppedBitmap(_normalMap, new Int32Rect(texX, texY, 1, 1));
-                            byte[] rgb = new byte[4];
-                            cb.CopyPixels(rgb, 4, 0);
-
-                            Vector3 Ntex = new(
-                                (rgb[2] / 255f) * 2 - 1, // R → X
-                                (rgb[1] / 255f) * 2 - 1, // G → Y
-                                (rgb[0] / 255f)          // B → Z (0.5–1.0)
-                            );
-
-                            // Oblicz Pu, Pv
-                            Vector3 Pu = Vector3.Normalize(tri.V1.PRot - tri.V0.PRot);
-                            Vector3 Pv = Vector3.Normalize(tri.V2.PRot - tri.V0.PRot);
-                            Vector3 Nsurf = N;
-
-                            Matrix4x4 M = new(
-                                Pu.X, Pv.X, Nsurf.X, 0,
-                                Pu.Y, Pv.Y, Nsurf.Y, 0,
-                                Pu.Z, Pv.Z, Nsurf.Z, 0,
-                                0,    0,    0,       1
-                            );
-
-                            N = Vector3.TransformNormal(Ntex, M);
-                            N = Vector3.Normalize(N);
-                        }
-                    }
-                    
-                    
-                    Vector3 IO = new(1, 1, 1);
-                    Vector3 L = Vector3.Normalize(new Vector3(0, 0, 1));
-                    Vector3 V = new(0, 0, 1);
-                    Vector3 R = Vector3.Normalize(2 * Vector3.Dot(N, L) * N - L);
-
-                    float cosNL = MathF.Max(0, Vector3.Dot(N, L));
-                    float cosVR = MathF.Max(0, Vector3.Dot(V, R));
-                    float specular = MathF.Pow(cosVR, _m);
-
-                    Vector3 IL = new(1, 1, 1);
-                    Vector3 I = _kd * IL * IO * cosNL + _ks * IL * IO * specular;
-
-                    byte r = (byte)Math.Min(255, I.X * 255);
-                    byte g = (byte)Math.Min(255, I.Y * 255);
-                    byte b = (byte)Math.Min(255, I.Z * 255);
-
-                    int index = y * stride + x * 4;
-                    pixels[index + 0] = b;
-                    pixels[index + 1] = g;
-                    pixels[index + 2] = r;
-                    pixels[index + 3] = 255;
+                    N = Vector3.TransformNormal(Ntex, M);
+                    N = Vector3.Normalize(N);
                 }
             }
+
+            // --- oświetlenie ---
+            Vector3 L = Vector3.Normalize(new Vector3(0.5f, 0.3f, 1f));
+            Vector3 V = new(0, 0, 1);
+            Vector3 R = Vector3.Normalize(2 * Vector3.Dot(N, L) * N - L);
+
+            float cosNL = MathF.Max(0, Vector3.Dot(N, L));
+            float cosVR = MathF.Max(0, Vector3.Dot(V, R));
+            float specular = MathF.Pow(cosVR, _m);
+
+            Vector3 IL = new(1, 1, 1); // białe światło
+            Vector3 I = _kd * IL * IO * cosNL + _ks * IL * IO * specular;
+
+            // konwersja do 8-bitów
+            byte r = (byte)Math.Min(255, I.X * 255);
+            byte g = (byte)Math.Min(255, I.Y * 255);
+            byte b = (byte)Math.Min(255, I.Z * 255);
+
+            int index = y * stride + x * 4;
+            pixels[index + 0] = b;
+            pixels[index + 1] = g;
+            pixels[index + 2] = r;
+            pixels[index + 3] = 255;
         }
+    }
+}
 
-        private void AddEdgeIntersection(Point a, Point b, int y, List<double> list)
-        {
-            if ((y < a.Y && y < b.Y) || (y > a.Y && y > b.Y) || (a.Y == b.Y)) return;
 
-            double t = (y - a.Y) / (b.Y - a.Y);
-            double x = a.X + t * (b.X - a.X);
-            list.Add(x);
-        }
+            private void AddEdgeIntersection(Point a, Point b, int y, List<double> list)
+            {
+                if ((y < a.Y && y < b.Y) || (y > a.Y && y > b.Y) || (a.Y == b.Y)) return;
 
-        private Vector3? ComputeBarycentric(Point p, Point a, Point b, Point c)
-        {
-            float denom = (float)((b.Y - c.Y) * (a.X - c.X) + (c.X - b.X) * (a.Y - c.Y));
-            if (Math.Abs(denom) < 1e-5) return null;
+                double t = (y - a.Y) / (b.Y - a.Y);
+                double x = a.X + t * (b.X - a.X);
+                list.Add(x);
+            }
 
-            float l0 = (float)((b.Y - c.Y) * (p.X - c.X) + (c.X - b.X) * (p.Y - c.Y)) / denom;
+            private Vector3? ComputeBarycentric(Point p, Point a, Point b, Point c)
+            {
+                float denom = (float)((b.Y - c.Y) * (a.X - c.X) + (c.X - b.X) * (a.Y - c.Y));
+                if (Math.Abs(denom) < 1e-5) return null;
+
+                float l0 = (float)((b.Y - c.Y) * (p.X - c.X) + (c.X - b.X) * (p.Y - c.Y)) / denom;
             float l1 = (float)((c.Y - a.Y) * (p.X - c.X) + (a.X - c.X) * (p.Y - c.Y)) / denom;
             float l2 = 1 - l0 - l1;
 
