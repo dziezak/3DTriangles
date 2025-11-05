@@ -22,9 +22,6 @@
     <Content Include="Resources\surface.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="Resources\john-cena.bmp" />
     <Content Include="Resources\john-cena.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
