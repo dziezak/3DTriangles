@@ -15,15 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Resources\surface.txt" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Resources\surface.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Remove="Resources\john-cena.bmp" />
     <Content Include="Resources\john-cena.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="Resources\surface.txt" />
+    <Content Include="Resources\surface.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -5,50 +5,42 @@
         Title="Bezier Visualizer" Height="700" Width="1000">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />         <!-- Canvas -->
-            <ColumnDefinition Width="Auto" />      <!-- Panel boczny -->
+            <ColumnDefinition Width="*" />         
+            <ColumnDefinition Width="Auto" />      
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>         <!-- Pasek górny -->
-            <RowDefinition Height="*"/>            <!-- Obszar rysowania -->
+            <RowDefinition Height="Auto"/>         
+            <RowDefinition Height="*"/>            
         </Grid.RowDefinitions>
 
-        <!-- Panel sterowania (górny pasek) -->
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0" Grid.ColumnSpan="2">
-            <!-- Alfa -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Alfa:" Margin="0,0,5,0"/>
                 <Slider x:Name="AlfaSlider" Minimum="0" Maximum="360" Width="150" ValueChanged="Slider_ValueChanged"/>
                 <TextBlock x:Name="AlfaValue" Width="40" Margin="5,0,0,0"/>
             </StackPanel>
 
-            <!-- Beta -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
                 <TextBlock Text="Beta:" Margin="0,0,5,0"/>
                 <Slider x:Name="BetaSlider" Minimum="0" Maximum="360" Width="150" ValueChanged="Slider_ValueChanged"/>
                 <TextBlock x:Name="BetaValue" Width="40" Margin="5,0,0,0"/>
             </StackPanel>
 
-            <!-- Resolution -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
                 <TextBlock Text="Resolution:" Margin="0,0,5,0"/>
                 <Slider x:Name="ResolutionSlider" Minimum="2" Maximum="50" Width="150" ValueChanged="Slider_ValueChanged" Value="10"/>
                 <TextBlock x:Name="ResolutionValue" Width="40" Margin="5,0,0,0"/>
             </StackPanel>
 
-            <!-- Checkboxy -->
             <CheckBox x:Name="ShowBezierPolygon" Content="Wielobok Beziera" Margin="20,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowTriangleMesh" Content="Siatka trójkątów" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowFilledTriangles" Content="Wypełnione trójkąty" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="UseNormalMap" Content="Użyj mapy normalnych" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
         </StackPanel>
 
-        <!-- Obszar rysowania -->
         <views:CanvasView x:Name="CanvasArea" Grid.Row="1" Grid.Column="0"/>
 
-        <!-- Panel boczny z suwakami oświetlenia -->
         <StackPanel Grid.Row="1" Grid.Column="1" Margin="10" VerticalAlignment="Top">
-            <!-- kd -->
             <StackPanel Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="kd (rozproszenie)" />
@@ -57,7 +49,6 @@
                 <Slider x:Name="KdSlider" Minimum="0" Maximum="1" Value="0.8" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
             </StackPanel>
 
-            <!-- ks -->
             <StackPanel Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="ks (zwierciadlane)" />
@@ -66,7 +57,6 @@
                 <Slider x:Name="KsSlider" Minimum="0" Maximum="1" Value="0.5" TickFrequency="0.1" Width="120" ValueChanged="Slider_ValueChanged"/>
             </StackPanel>
 
-            <!-- m -->
             <StackPanel Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="m (połysk)" />
@@ -74,6 +64,9 @@
                 </StackPanel>
                 <Slider x:Name="MSlider" Minimum="1" Maximum="100" Value="20" TickFrequency="1" Width="120" ValueChanged="Slider_ValueChanged"/>
             </StackPanel>
+            <Slider x:Name="LightZSlider" Minimum="0" Maximum="2" Value="1" Width="100" Margin="10"
+                    />
+            <CheckBox x:Name="AnimateLight" Content="Animuj światło" Margin="10"/>
         </StackPanel>
     </Grid>
 </Window>
