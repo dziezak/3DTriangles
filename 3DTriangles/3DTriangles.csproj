@@ -19,6 +19,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Remove="Resources\surface.txt" />
+    <None Remove="Resources\brick_normalmap.png" />
+    <Content Include="Resources\brick_normalmap.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

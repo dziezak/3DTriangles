@@ -2,10 +2,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using _3DTriangles.Models;
 using _3DTriangles.Services;
 using BezierVisualizer.Views;
+using Microsoft.Win32;
+using YourAppNamespace.Rendering;
 
 namespace BezierVisualizer
 {
@@ -33,6 +36,79 @@ namespace BezierVisualizer
             _lightTimer.Tick += UpdateLightPosition;
             _lightTimer.Start();
         }
+        
+        private void UseNormalMap_Checked(object sender, RoutedEventArgs e)
+        {
+            CanvasArea.SetNormalMapUsage(UseNormalMap.IsChecked == true);
+            RedrawScene();
+        }
+
+        private void UseNormalBitMat_Checked(object sender, RoutedEventArgs e)
+        {
+            if (CanvasArea != null)
+            {
+                CanvasArea.SetNormalMapUsage(UseNormalMap.IsChecked == true);
+                RedrawScene();
+            }
+        }
+        
+        private void LoadNormalBitMap_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Obrazy (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Wszystkie pliki|*.*"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var bitmap = new BitmapImage(new Uri(dialog.FileName));
+                    var writable = new WriteableBitmap(bitmap);
+                    CanvasArea.LoadNormalBitMap(writable);
+
+                    MessageBox.Show("Mapa wektorów normalnych została wczytana poprawnie.",
+                        "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Błąd przy wczytywaniu mapy normalnych:\n{ex.Message}",
+                        "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        
+        private void LoadNormalMap_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Obrazy (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Wszystkie pliki|*.*"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var bitmap = new BitmapImage(new Uri(dialog.FileName));
+                    var writable = new WriteableBitmap(bitmap);
+
+                    CanvasArea.LoadNormalMap(writable);
+
+                    MessageBox.Show("Mapa normalnych została wczytana poprawnie.", 
+                        "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Błąd przy wczytywaniu mapy normalnych:\n{ex.Message}",
+                        "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+        
+      
+
+
         
         private void UpdateLightPosition(object sender, EventArgs e)
         {
@@ -141,7 +217,8 @@ namespace BezierVisualizer
                 kd: (float)KdSlider.Value,
                 ks: (float)KsSlider.Value,
                 m: (int)MSlider.Value,
-                UseNormalMap: UseNormalMap.IsChecked == true
+                UseNormalMap: UseNormalMap.IsChecked == true,
+                UseNormalBitMap: UseNormalBitMap.IsChecked == true
             );
         }
     }

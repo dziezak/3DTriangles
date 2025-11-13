@@ -37,7 +37,19 @@
         <views:CanvasView x:Name="CanvasArea" Grid.Row="1" Grid.Column="0"/>
 
         <StackPanel Grid.Row="1" Grid.Column="1" Margin="10" VerticalAlignment="Top">
-            
+            <StackPanel Margin="0,10,0,0">
+                <Button x:Name="LoadNormalMapButton" 
+                        Content="Wczytaj mapę wektorów normalnych"
+                        Width="200"
+                        Margin="10"
+                        Click="LoadNormalBitMap_Click"/>
+                <CheckBox x:Name="UseNormalBitMap"
+                          Content="Użyj mapy wektorów normalnych"
+                          Margin="10"
+                          Checked="UseNormalBitMat_Checked"
+                          Unchecked="UseNormalMap_Checked"/>
+            </StackPanel>
+
             <CheckBox x:Name="ShowBezierPolygon" Content="Wielobok Beziera" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowTriangleMesh" Content="Siatka trójkątów" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowFilledTriangles" Content="Wypełnione trójkąty" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>

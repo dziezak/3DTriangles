@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using _3DTriangles.Models;
 using _3DTriangles.Services;
+using YourAppNamespace.Rendering;
 
 namespace BezierVisualizer.Views
 {
@@ -32,15 +33,15 @@ namespace BezierVisualizer.Views
         private int _normalMapStride;
         
         private Vector3 _lightPosition = new Vector3(0.5f, 0.3f, 1f);
-        private Vector3 _ioColor = new(1, 1, 1);
-        //TODO:
-        /*
-        private bool _useTexture = false;
-        private BitmapImage _objectTexture;
-        private byte[] _objectTextureBytes;
-        private int _objectTextureStride;
-        */
+        private Vector3 _ioColor = new(1, 1, 1); 
+        
+        private bool _useNormalBitMap;
+        private BitmapSource _normalBitMap;
+        private byte[] _normalBitMapBytes;
+        private int _normalBitMapStride;
+        private readonly NormalMapHandler _normalHandler = new NormalMapHandler();
 
+        
         
         private ScaleTransform _scale = new ScaleTransform(1.0, 1.0);
 
@@ -88,7 +89,7 @@ namespace BezierVisualizer.Views
         }
 
         public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh,
-            bool showFilledTriangles, float kd, float ks, int m, bool UseNormalMap)
+            bool showFilledTriangles, float kd, float ks, int m, bool UseNormalMap, bool UseNormalBitMap)
         {
             _triangles = triangles;
             _showBezierPolygon = showBezierPolygon;
@@ -98,6 +99,7 @@ namespace BezierVisualizer.Views
             _ks = ks;
             _m = m;
             _useNormalMap = UseNormalMap;
+            _useNormalBitMap = UseNormalBitMap;
 
             Draw();
         }
@@ -343,6 +345,48 @@ namespace BezierVisualizer.Views
                             IO = new Vector3(r / 255f, g / 255f, b / 255f);
                         }
                     }
+                    
+                    // Opcja ze Strukturą
+                    if (_useNormalBitMap && _normalBitMap != null && _normalBitMapBytes != null)
+                    {
+                        int texX = (int)(u * (_normalBitMap.PixelWidth - 1));
+                        int texY = (int)((1 - v) * (_normalBitMap.PixelHeight - 1));
+                        texX = Math.Clamp(texX, 0, _normalBitMap.PixelWidth - 1);
+                        texY = Math.Clamp(texY, 0, _normalBitMap.PixelHeight - 1);
+
+                        int texIndex = texY * _normalBitMapStride + texX * bytesPerPixel;
+
+                        byte b = _normalBitMapBytes[texIndex + 0];
+                        byte g = _normalBitMapBytes[texIndex + 1];
+                        byte r = _normalBitMapBytes[texIndex + 2];
+
+                        // RGB → [-1,+1]
+                        Vector3 Ntex = new(
+                            (r / 255f) * 2f - 1f,
+                            (g / 255f) * 2f - 1f,
+                            (b / 255f) * 2f - 1f
+                        );
+
+                        // zapewniamy, że Z (blue) jest dodatni
+                        Ntex.Z = MathF.Abs(Ntex.Z);
+
+                        // przekształcenie: N = M * Ntekstury
+                        Vector3 tangent = Vector3.Normalize(Vector3.Cross(N, new Vector3(0, 1, 0)));
+                        Vector3 bitangent = Vector3.Normalize(Vector3.Cross(N, tangent));
+
+                        Matrix4x4 M = new(
+                            tangent.X, bitangent.X, N.X, 0,
+                            tangent.Y, bitangent.Y, N.Y, 0,
+                            tangent.Z, bitangent.Z, N.Z, 0,
+                            0, 0, 0, 1
+                        );
+
+                        N = Vector3.TransformNormal(Ntex, M);
+                        N = Vector3.Normalize(N);
+                    }
+
+                    
+                    
 
                     Vector3 point = tri.V0.PRot * l0 + tri.V1.PRot * l1 + tri.V2.PRot * l2;
                     Vector3 L = Vector3.Normalize(_lightPosition - point);
@@ -405,6 +449,28 @@ namespace BezierVisualizer.Views
         }
         
         public Vector3 GetLightPosition() => _lightPosition;
+        
+        public void SetNormalMapUsage(bool enabled)
+        {
+            _normalHandler.IsEnabled = enabled;
+        }
+        
+        public void LoadNormalMap(WriteableBitmap bitmap)
+        {
+            _normalHandler.LoadNormalMap(bitmap);
+        }
+        
+        public void LoadNormalBitMap(WriteableBitmap bitmap)
+        {
+            _normalBitMap = bitmap;
+            _normalBitMapStride = bitmap.PixelWidth * 4;
+            _normalBitMapBytes = new byte[bitmap.PixelHeight * _normalBitMapStride];
+            bitmap.CopyPixels(_normalBitMapBytes, _normalBitMapStride, 0);
+
+            Console.WriteLine("Załadowano mapę wektorów normalnych (normalBitMap).");
+        }
+
+
 
     }
 }
