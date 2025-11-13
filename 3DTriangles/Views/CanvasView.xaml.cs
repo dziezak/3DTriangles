@@ -87,8 +87,6 @@ namespace BezierVisualizer.Views
             _scale.ScaleY *= zoomFactor;
         }
 
-
-
         public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh,
             bool showFilledTriangles, float kd, float ks, int m, bool UseNormalMap)
         {
@@ -217,6 +215,30 @@ namespace BezierVisualizer.Views
 
                 grid.Children.Add(overlay);
             }
+            
+            var overlayLight = new Canvas();
+            Point light2D = ToCanvas(_lightPosition, centerX, centerY);
+
+            // Draw small sun
+            var sun = new System.Windows.Shapes.Ellipse
+            {
+                Width = 10,
+                Height = 10,
+                Fill = Brushes.Yellow,
+                Stroke = Brushes.Orange,
+                StrokeThickness = 1.5,
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = Colors.Orange,
+                    BlurRadius = 10,
+                    Opacity = 0.8,
+                }
+            };
+            
+            Canvas.SetLeft(sun, light2D.X - 5);
+            Canvas.SetTop(sun, light2D.Y - 5);
+            overlayLight.Children.Add(sun);
+            grid.Children.Add(overlayLight);
 
             var zoomContainer = new Grid
             {

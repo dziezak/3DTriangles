@@ -26,6 +26,7 @@ namespace BezierVisualizer
             UpdateSliderLabels();
             RedrawScene();
             
+            LightAngleSlider.ValueChanged += LightAngleSlider_Changed;
             LightZSlider.ValueChanged += LightZSlider_Changed;
             _lightTimer = new DispatcherTimer();
             _lightTimer.Interval = TimeSpan.FromMilliseconds(30);
@@ -48,28 +49,49 @@ namespace BezierVisualizer
             RedrawScene();
         }
 
-        private void LightZSlider_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void LightAngleSlider_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (!IsLoaded || CanvasArea == null || AnimateLight == null || LightZSlider == null)
+            if (!IsLoaded || CanvasArea == null || AnimateLight == null || LightAngleValue == null)
             {
-                Console.WriteLine("LightZSlider_Changed something is null");
+                Console.WriteLine("LightAngleSlider_Changed something is null");
                 return;
             }
 
             if (AnimateLight.IsChecked == true)
             {
-                Console.WriteLine("LightZSlider_Changed: Animation in session");
+                Console.WriteLine("LightAngleSlider_Changed: Animation in session");
                 return;
             }
 
-            float z = (float)LightZSlider.Value;
+            float angle = MathF.PI * (float)LightAngleSlider.Value / 180f;
+            float radious = 1.5f;
+            float x = radious * MathF.Cos(angle);
+            float y = radious * MathF.Sin(angle);
+            float z = CanvasArea.GetLightPosition().Z;
 
-            Vector3 current = CanvasArea.GetLightPosition();
-            CanvasArea.SetLightPosition(new Vector3(current.X, current.Y, z));
+            CanvasArea.SetLightPosition(new Vector3(x, y, z));
+            UpdateSliderLabels();
             RedrawScene();
         }
 
+        private void LightZSlider_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded || CanvasArea == null) return;
 
+            float angleRad = (float)(LightAngleSlider.Value * Math.PI / 180.0);
+            float radius = 1.5f;
+
+            float x = radius * MathF.Cos(angleRad);
+            float y = radius * MathF.Sin(angleRad);
+            float z = (float)LightZSlider.Value;
+
+            CanvasArea.SetLightPosition(new Vector3(x, y, z));
+
+            LightZValue.Text = z.ToString("0.00");
+
+            RedrawScene();
+        }
+        
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!IsLoaded) return;
@@ -91,6 +113,7 @@ namespace BezierVisualizer
             KdValue.Text = KdSlider.Value.ToString("0.00");
             KsValue.Text = KsSlider.Value.ToString("0.00");
             MValue.Text = MSlider.Value.ToString("0.00");
+            LightAngleValue.Text = $"{(int)LightAngleSlider.Value}°";
         }
 
         private void RedrawScene()

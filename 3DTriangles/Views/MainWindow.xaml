@@ -32,15 +32,16 @@
                 <TextBlock x:Name="ResolutionValue" Width="40" Margin="5,0,0,0"/>
             </StackPanel>
 
-            <CheckBox x:Name="ShowBezierPolygon" Content="Wielobok Beziera" Margin="20,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
-            <CheckBox x:Name="ShowTriangleMesh" Content="Siatka trójkątów" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
-            <CheckBox x:Name="ShowFilledTriangles" Content="Wypełnione trójkąty" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
-            <CheckBox x:Name="UseNormalMap" Content="Użyj mapy normalnych" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
         </StackPanel>
 
         <views:CanvasView x:Name="CanvasArea" Grid.Row="1" Grid.Column="0"/>
 
         <StackPanel Grid.Row="1" Grid.Column="1" Margin="10" VerticalAlignment="Top">
+            
+            <CheckBox x:Name="ShowBezierPolygon" Content="Wielobok Beziera" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
+            <CheckBox x:Name="ShowTriangleMesh" Content="Siatka trójkątów" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
+            <CheckBox x:Name="ShowFilledTriangles" Content="Wypełnione trójkąty" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
+            <CheckBox x:Name="UseNormalMap" Content="Użyj mapy normalnych" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <StackPanel Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="kd (rozproszenie)" />
@@ -64,9 +65,33 @@
                 </StackPanel>
                 <Slider x:Name="MSlider" Minimum="1" Maximum="100" Value="20" TickFrequency="1" Width="120" ValueChanged="Slider_ValueChanged"/>
             </StackPanel>
-            <Slider x:Name="LightZSlider" Minimum="0" Maximum="2" Value="1" Width="100" Margin="10"
-                    />
-            <CheckBox x:Name="AnimateLight" Content="Animuj światło" Margin="10"/>
+            <StackPanel Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Kąt światła w stopniach" />
+                    <TextBlock x:Name="LightAngleValue" Text="0°" Margin="10,0,0,0"/>
+                </StackPanel>
+                <Slider x:Name="LightAngleSlider" 
+                        Minimum="0" 
+                        Maximum="360" 
+                        Value="0" 
+                        Width="150" 
+                        Margin="10" 
+                        TickFrequency="10" 
+                        IsSnapToTickEnabled="False"
+                        ValueChanged="LightAngleSlider_Changed"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Wysokość światła"/>
+                    <TextBlock x:Name="LightZValue" Text="0°" Margin="10, 0, 0, 0"/>
+                </StackPanel>
+                <Slider x:Name="LightZSlider"
+                        Minimum="0"
+                        Maximum="2"
+                        Value="1"
+                        Width="100"
+                        Margin="10"
+                        />
+                <CheckBox x:Name="AnimateLight" Content="Animuj światło" Margin="10"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>
