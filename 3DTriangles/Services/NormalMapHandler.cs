@@ -21,7 +21,7 @@ namespace YourAppNamespace.Rendering
             normalMap.CopyPixels(_normalMapBytes, _stride, 0);
         }
 
-        public Vector3 ApplyNormalMap(Vector3 Npow, Vector3 Pu, Vector3 Pv, float u, float v)
+        public Vector3 ApplyNormalMap(Vector3 Npow, Vector3 tangent, Vector3 bitangent, float u, float v)
         {
             if (!IsEnabled || _normalMap == null || _normalMapBytes == null)
                 return Npow;
@@ -42,18 +42,23 @@ namespace YourAppNamespace.Rendering
             Vector3 Ntex = new Vector3(
                 (r / 255f) * 2f - 1f,
                 (g / 255f) * 2f - 1f,
-                (b / 255f)
+                (b / 255f) * 2f - 1f
             );
-            Ntex = Vector3.Normalize(Ntex);
 
-            Matrix4x4 M = new Matrix4x4(
-                Pu.X, Pv.X, Npow.X, 0,
-                Pu.Y, Pv.Y, Npow.Y, 0,
-                Pu.Z, Pv.Z, Npow.Z, 0,
+            if (Ntex.LengthSquared() < 1e-6f)
+                Ntex = new Vector3(0, 0, 1);
+            else
+                Ntex = Vector3.Normalize(Ntex);
+
+            Matrix4x4 TBN = new Matrix4x4(
+                tangent.X, bitangent.X, Npow.X, 0,
+                tangent.Y, bitangent.Y, Npow.Y, 0,
+                tangent.Z, bitangent.Z, Npow.Z, 0,
                 0, 0, 0, 1
             );
 
-            Vector3 Nmod = Vector3.TransformNormal(Ntex, M);
+            Vector3 Nmod = Vector3.TransformNormal(Ntex, TBN);
+
             return Vector3.Normalize(Nmod);
         }
     }
