@@ -5,11 +5,14 @@ using System.IO;
 using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using _3DTriangles.Models;
 using _3DTriangles.Services;
 using YourAppNamespace.Rendering;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
+using UserControl = System.Windows.Controls.UserControl;
 
 namespace BezierVisualizer.Views
 {
@@ -44,6 +47,7 @@ namespace BezierVisualizer.Views
         
         
         private ScaleTransform _scale = new ScaleTransform(1.0, 1.0);
+        private Vector3 _lightColor = new(1, 1, 1);
 
         public CanvasView()
         {
@@ -110,7 +114,7 @@ namespace BezierVisualizer.Views
             Draw();
         }
 
-        private void Draw()
+        public void Draw()
         {
             if (ActualWidth <= 0 || ActualHeight <= 0 || _triangles == null)
                 return;
@@ -288,7 +292,7 @@ namespace BezierVisualizer.Views
             int minY = (int)Math.Floor(Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
             int maxY = (int)Math.Ceiling(Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
 
-            const int bytesPerPixel = 4; // zakładamy BGRA32 / Bgra32
+            const int bytesPerPixel = 4;
 
             for (int y = minY; y <= maxY; y++)
             {
@@ -345,7 +349,7 @@ namespace BezierVisualizer.Views
                             IO = new Vector3(r / 255f, g / 255f, b / 255f);
                         }
                     }
-                    
+
                     if (_useNormalBitMap && _normalBitMap != null)
                     {
                         Vector3 tangent = Vector3.Normalize(Vector3.Cross(N, new Vector3(0, 1, 0)));
@@ -354,8 +358,6 @@ namespace BezierVisualizer.Views
 
                         N = _normalHandler.ApplyNormalMap(N, tangent, bitangent, u, v);
                     }
-
-                    
 
                     Vector3 point = tri.V0.PRot * l0 + tri.V1.PRot * l1 + tri.V2.PRot * l2;
                     Vector3 L = Vector3.Normalize(_lightPosition - point);
@@ -366,7 +368,7 @@ namespace BezierVisualizer.Views
                     float cosVR = MathF.Max(0, Vector3.Dot(V, R));
                     float specularFactor = MathF.Pow(cosVR, _m);
 
-                    Vector3 IL = new Vector3(1, 1, 1);
+                    Vector3 IL = _lightColor;
 
                     Vector3 diffuse = _kd * IO * IL * cosNL;
                     Vector3 specular = _ks * IL * specularFactor;
@@ -418,9 +420,20 @@ namespace BezierVisualizer.Views
         }
         
         public Vector3 GetLightPosition() => _lightPosition;
+
+        public void SetLightColor(Vector3 color)
+        {
+            _lightColor = color;
+        }
         
         public void SetNormalMapUsage(bool enabled)
         {
+            _useNormalMap = enabled;
+        }
+
+        public void SetNormalBitMapUsage(bool enabled)
+        {
+            _useNormalBitMap = enabled;
             _normalHandler.IsEnabled = enabled;
         }
         
@@ -436,14 +449,10 @@ namespace BezierVisualizer.Views
             _normalBitMapBytes = new byte[bitmap.PixelHeight * _normalBitMapStride];
             bitmap.CopyPixels(_normalBitMapBytes, _normalBitMapStride, 0);
 
-            // Konwersja do WriteableBitmap dla handlera (jeśli jeszcze nie jest)
             var writable = _normalBitMap as WriteableBitmap ?? new WriteableBitmap(_normalBitMap);
             _normalHandler.LoadNormalMap(writable);
 
             Console.WriteLine("Załadowano mapę wektorów normalnych (normalBitMap).");
         }
-
-
-
     }
 }

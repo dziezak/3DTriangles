@@ -47,13 +47,18 @@
                           Content="Użyj mapy wektorów normalnych"
                           Margin="10"
                           Checked="UseNormalBitMat_Checked"
-                          Unchecked="UseNormalMap_Checked"/>
+                          Unchecked="UseNormalBitMap_Unchecked"/>
             </StackPanel>
 
             <CheckBox x:Name="ShowBezierPolygon" Content="Wielobok Beziera" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowTriangleMesh" Content="Siatka trójkątów" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
             <CheckBox x:Name="ShowFilledTriangles" Content="Wypełnione trójkąty" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
-            <CheckBox x:Name="UseNormalMap" Content="Użyj mapy normalnych" Margin="10,0,0,0" Checked="Checkbox_Changed" Unchecked="Checkbox_Changed"/>
+            <CheckBox x:Name="UseNormalMap" 
+                      Content="Użyj mapy normalnych" 
+                      Margin="10,0,0,0" 
+                      Checked="UseNormalMap_Checked" 
+                      Unchecked="UseNormalMap_Unchecked"
+                      />
             <StackPanel Margin="0,0,0,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="kd (rozproszenie)" />
@@ -91,13 +96,26 @@
                         TickFrequency="10" 
                         IsSnapToTickEnabled="False"
                         ValueChanged="LightAngleSlider_Changed"/>
+                <StackPanel Margin="0,0,0,10">
+                    <TextBlock Text="Kolor światła:" Margin="0,0,0,5"/>
+                    <Border x:Name="LightColorPreview"
+                            Width="40" Height="20"
+                            BorderBrush="Black" BorderThickness="1"
+                            Background="White"
+                            Margin="0,0,0,10"/>
+                    <Button Content="Wybierz kolor światła"
+                            Width="200"
+                            Click="PickLightColorButton_Click"/>
+                </StackPanel>
+
+                
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Wysokość światła"/>
                     <TextBlock x:Name="LightZValue" Text="0°" Margin="10, 0, 0, 0"/>
                 </StackPanel>
                 <Slider x:Name="LightZSlider"
                         Minimum="0"
-                        Maximum="2"
+                        Maximum="3"
                         Value="1"
                         Width="100"
                         Margin="10"

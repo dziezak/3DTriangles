@@ -2,13 +2,17 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Windows.Forms;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using _3DTriangles.Models;
 using _3DTriangles.Services;
 using BezierVisualizer.Views;
-using Microsoft.Win32;
 using YourAppNamespace.Rendering;
+using Color = System.Drawing.Color;
+using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace BezierVisualizer
 {
@@ -16,6 +20,8 @@ namespace BezierVisualizer
     {
         private DispatcherTimer _lightTimer;
         private double _lightAngle = 0;
+        private Vector3 _lightColor = new Vector3(1f, 1f, 1f);
+
 
         public MainWindow()
         {
@@ -37,20 +43,67 @@ namespace BezierVisualizer
             _lightTimer.Start();
         }
         
+        private void PickLightColorButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new ColorDialog();
+            dialog.FullOpen = true;
+            dialog.Color = System.Drawing.Color.White;
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var c = dialog.Color;
+
+                _lightColor = new Vector3(
+                    c.R / 255f,
+                    c.G / 255f,
+                    c.B / 255f
+                );
+
+                CanvasArea.SetLightColor(_lightColor);
+                LightColorPreview.Background = new SolidColorBrush(
+                    System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
+                );
+                
+                CanvasArea.Draw();
+            }
+        }
+        
         private void UseNormalMap_Checked(object sender, RoutedEventArgs e)
         {
-            CanvasArea.SetNormalMapUsage(UseNormalMap.IsChecked == true);
-            RedrawScene();
+            if (CanvasArea != null)
+            {
+                CanvasArea.SetNormalMapUsage(true);
+                RedrawScene();
+            }
+        }
+        
+        private void UseNormalMap_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (CanvasArea != null)
+            {
+                CanvasArea.SetNormalMapUsage(false);
+                RedrawScene();
+            }
         }
 
         private void UseNormalBitMat_Checked(object sender, RoutedEventArgs e)
         {
             if (CanvasArea != null)
             {
-                CanvasArea.SetNormalMapUsage(UseNormalMap.IsChecked == true);
+                CanvasArea.SetNormalBitMapUsage(true);
                 RedrawScene();
             }
         }
+
+        private void UseNormalBitMap_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (CanvasArea != null)
+            {
+                CanvasArea.SetNormalBitMapUsage(false);
+                RedrawScene();
+            }
+        }
+
         
         private void LoadNormalBitMap_Click(object sender, RoutedEventArgs e)
         {
