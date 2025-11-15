@@ -439,7 +439,10 @@ namespace BezierVisualizer.Views
         
         public void LoadNormalMap(WriteableBitmap bitmap)
         {
-            _normalHandler.LoadNormalMap(bitmap);
+            _normalMap = bitmap;
+            _normalMapStride = bitmap.PixelWidth * 4;
+            _normalMapBytes = new byte[bitmap.PixelHeight * _normalMapStride];
+            bitmap.CopyPixels(_normalMapBytes, _normalMapStride, 0);
         }
         
         public void LoadNormalBitMap(WriteableBitmap bitmap)

@@ -136,7 +136,7 @@ namespace BezierVisualizer
         {
             var dialog = new OpenFileDialog
             {
-                Filter = "Obrazy (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Wszystkie pliki|*.*"
+                Filter = "Obrazy (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|Wszystkie pliki|*.*"
             };
 
             if (dialog.ShowDialog() == true)
