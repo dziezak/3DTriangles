@@ -21,6 +21,7 @@ namespace BezierVisualizer
         private DispatcherTimer _lightTimer;
         private double _lightAngle = 0;
         private Vector3 _lightColor = new Vector3(1f, 1f, 1f);
+        private Vector3 _objectColor = new Vector3(1f, 1f, 1f); // default white color
 
 
         public MainWindow()
@@ -43,6 +44,32 @@ namespace BezierVisualizer
             _lightTimer.Start();
         }
         
+        private void PickObjectColorButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new ColorDialog();
+            dialog.FullOpen = true;
+            dialog.Color = System.Drawing.Color.White;
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var c = dialog.Color;
+
+                _objectColor = new Vector3(
+                    c.R / 255f,
+                    c.G / 255f,
+                    c.B / 255f
+                );
+
+                CanvasArea.SetObjectColor(_objectColor);
+
+                ObjectColorPreview.Background = new SolidColorBrush(
+                    System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B)
+                );
+
+                CanvasArea.Draw();
+            }
+        }
+
         private void PickLightColorButton_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new ColorDialog();

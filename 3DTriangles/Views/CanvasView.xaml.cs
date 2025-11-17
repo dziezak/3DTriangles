@@ -36,7 +36,7 @@ namespace BezierVisualizer.Views
         private int _normalMapStride;
         
         private Vector3 _lightPosition = new Vector3(0.5f, 0.3f, 1f);
-        private Vector3 _ioColor = new(1, 1, 1); 
+        private Vector3 _ioColor = new(1, 1, 1);  //Material color
         
         private bool _useNormalBitMap;
         private BitmapSource _normalBitMap;
@@ -321,7 +321,7 @@ namespace BezierVisualizer.Views
                     float l2 = bary.Value.Z;
 
                     Vector3 N = Vector3.Normalize(tri.V0.NRot * l0 + tri.V1.NRot * l1 + tri.V2.NRot * l2);
-                    Vector3 IO = _ioColor;
+                    Vector3 IO = new Vector3(1, 1, 1);
 
                     Vector2 uv = new Vector2(tri.V0.U, tri.V0.V) * l0 +
                                  new Vector2(tri.V1.U, tri.V1.V) * l1 +
@@ -348,6 +348,10 @@ namespace BezierVisualizer.Views
 
                             IO = new Vector3(r / 255f, g / 255f, b / 255f);
                         }
+                    }
+                    else
+                    { 
+                        IO = _ioColor;
                     }
 
                     if (_useNormalBitMap && _normalBitMap != null)
@@ -457,5 +461,11 @@ namespace BezierVisualizer.Views
 
             Console.WriteLine("Załadowano mapę wektorów normalnych (normalBitMap).");
         }
+        
+        public void SetObjectColor(Vector3 color)
+        {
+            _ioColor = color;
+        }
+
     }
 }
