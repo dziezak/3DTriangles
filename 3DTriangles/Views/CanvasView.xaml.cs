@@ -56,6 +56,7 @@ namespace BezierVisualizer.Views
             PreviewMouseWheel += CanvasView_MouseWheel;
 
 
+            //default image
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "john-cena.bmp");
             if (File.Exists(path))
             {
