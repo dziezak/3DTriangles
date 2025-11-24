@@ -29,6 +29,7 @@ namespace BezierVisualizer
         private bool _animateSurface = false;
         private double _amplitude = 0.2;
         private double _frequency = 2.0;
+        private bool _useSpotlight = false;
 
 
         public MainWindow()
@@ -49,6 +50,18 @@ namespace BezierVisualizer
             _lightTimer.Interval = TimeSpan.FromMilliseconds(30);
             _lightTimer.Tick += UpdateLightPosition;
             _lightTimer.Start();
+        }
+        
+        private void UseSpotlight_Checked(object sender, RoutedEventArgs e)
+        {
+            _useSpotlight = true;
+            RedrawScene();
+        }
+
+        private void UseSpotlight_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _useSpotlight = false;
+            RedrawScene();
         }
         
         private void AnimateSurface_Checked(object sender, RoutedEventArgs e)
@@ -121,7 +134,9 @@ namespace BezierVisualizer
                 ks: (float)KsSlider.Value,
                 m: (int)MSlider.Value,
                 UseNormalMap: UseNormalMap.IsChecked == true,
-                UseNormalBitMap: UseNormalBitMap.IsChecked == true
+                UseNormalBitMap: UseNormalBitMap.IsChecked == true,
+                useSpotlight: _useSpotlight,
+                spotlightWidth: (float)SpotlightWidthSlider.Value
             );
         }
 
@@ -382,7 +397,9 @@ namespace BezierVisualizer
                 ks: (float)KsSlider.Value,
                 m: (int)MSlider.Value,
                 UseNormalMap: UseNormalMap.IsChecked == true,
-                UseNormalBitMap: UseNormalBitMap.IsChecked == true
+                UseNormalBitMap: UseNormalBitMap.IsChecked == true,
+                useSpotlight: _useSpotlight,
+                spotlightWidth: (float)SpotlightWidthSlider.Value
             );
         }
     }

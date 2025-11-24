@@ -48,6 +48,10 @@ namespace BezierVisualizer.Views
         
         private ScaleTransform _scale = new ScaleTransform(1.0, 1.0);
         private Vector3 _lightColor = new(1, 1, 1);
+        
+        private bool _useSpotlight = false;
+        private float _spotlightWidth = 5.0f;
+
 
         public CanvasView()
         {
@@ -94,7 +98,7 @@ namespace BezierVisualizer.Views
         }
 
         public void SetTriangles(List<Triangle> triangles, bool showBezierPolygon, bool showTriangleMesh,
-            bool showFilledTriangles, float kd, float ks, int m, bool UseNormalMap, bool UseNormalBitMap)
+            bool showFilledTriangles, float kd, float ks, int m, bool UseNormalMap, bool UseNormalBitMap, bool useSpotlight, float spotlightWidth)
         {
             _triangles = triangles;
             _showBezierPolygon = showBezierPolygon;
@@ -105,7 +109,8 @@ namespace BezierVisualizer.Views
             _m = m;
             _useNormalMap = UseNormalMap;
             _useNormalBitMap = UseNormalBitMap;
-
+            _useSpotlight = useSpotlight;
+            _spotlightWidth = spotlightWidth;
             Draw();
         }
 
@@ -372,6 +377,44 @@ namespace BezierVisualizer.Views
                     float cosNL = MathF.Max(0, Vector3.Dot(N, L));
                     float cosVR = MathF.Max(0, Vector3.Dot(V, R));
                     float specularFactor = MathF.Pow(cosVR, _m);
+                    
+                    if (_useSpotlight)
+                    {
+                        Vector3 spotlightDir = (-_lightPosition);
+                        spotlightDir = Vector3.Normalize(spotlightDir);
+
+                        Vector3 lightToPoint = point - _lightPosition;
+                        lightToPoint = Vector3.Normalize(lightToPoint);
+
+                        float spotFactor = Vector3.Dot(spotlightDir, lightToPoint);
+
+                        float threshold = (float)Math.Cos(Math.PI / (_spotlightWidth + 1));
+
+                        if (spotFactor < threshold)
+                        {
+                            Vector3 ambient = IO * 0.1f;
+                            ambient.X = Math.Clamp(ambient.X, 0f, 1f);
+                            ambient.Y = Math.Clamp(ambient.Y, 0f, 1f);
+                            ambient.Z = Math.Clamp(ambient.Z, 0f, 1f);
+
+                            byte rA = (byte)(ambient.X * 255f);
+                            byte gA = (byte)(ambient.Y * 255f);
+                            byte bA = (byte)(ambient.Z * 255f);
+
+                            int indexA = y * stride + x * bytesPerPixel;
+                            pixels[indexA + 0] = bA;
+                            pixels[indexA + 1] = gA;
+                            pixels[indexA + 2] = rA;
+                            pixels[indexA + 3] = 255;
+
+                            continue;
+                        }
+
+                        float intensity = (spotFactor - threshold) / (1 - threshold);
+
+                        cosNL *= intensity;
+                        specularFactor *= intensity;
+                    }
 
                     Vector3 IL = _lightColor;
 

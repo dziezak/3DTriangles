@@ -145,6 +145,22 @@
                           Margin="10"
                           Checked="AnimateSurface_Checked"
                           Unchecked="AnimateSurface_Unchecked"/>
+                
+                <CheckBox x:Name="UseSpotlight"
+                          Content="Użyj światła jako reflektor"
+                          Margin="10"
+                          Checked="UseSpotlight_Checked"
+                          Unchecked="UseSpotlight_Unchecked"/>
+
+                <StackPanel Orientation="Horizontal" Margin="10">
+                    <TextBlock Text="Szerokość stożka:" VerticalAlignment="Center"/>
+                    <Slider x:Name="SpotlightWidthSlider"
+                            Minimum="1" Maximum="10"
+                            Value="5"
+                            Width="100"
+                            Margin="10,0,0,0"/>
+                </StackPanel>
+
 
             </StackPanel>
         </StackPanel>
