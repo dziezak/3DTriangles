@@ -71,7 +71,7 @@ namespace BezierVisualizer
             if (_waveTimer == null)
             {
                 _waveTimer = new DispatcherTimer();
-                _waveTimer.Interval = TimeSpan.FromMilliseconds(30);
+                _waveTimer.Interval = TimeSpan.FromMilliseconds(20);
                 _waveTimer.Tick += WaveTick;
             }
             _waveTimer.Start();

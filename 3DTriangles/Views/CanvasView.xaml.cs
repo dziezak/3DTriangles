@@ -51,6 +51,8 @@ namespace BezierVisualizer.Views
         
         private bool _useSpotlight = false;
         private float _spotlightWidth = 5.0f;
+        private float[] _zBuffer;
+
 
 
         public CanvasView()
@@ -134,6 +136,13 @@ namespace BezierVisualizer.Views
 
             if (_showFilledTriangles)
             {
+                // new
+                if (_zBuffer == null || _zBuffer.Length != width * height)
+                    _zBuffer = new float[width * height];
+
+                for (int i = 0; i < _zBuffer.Length; i++)
+                    _zBuffer[i] = float.MaxValue;
+                //end
                 _bitmap.Lock();
                 unsafe
                 {
@@ -231,7 +240,7 @@ namespace BezierVisualizer.Views
             var overlayLight = new Canvas();
             Point light2D = ToCanvas(_lightPosition, centerX, centerY);
 
-            // Draw small sun
+            // Drawing small sun
             var sun = new System.Windows.Shapes.Ellipse
             {
                 Width = 10,
@@ -368,8 +377,20 @@ namespace BezierVisualizer.Views
 
                         N = _normalHandler.ApplyNormalMap(N, tangent, bitangent, u, v);
                     }
-
+                    
+                    // new:
                     Vector3 point = tri.V0.PRot * l0 + tri.V1.PRot * l1 + tri.V2.PRot * l2;
+                    float depth = point.Z;
+
+                    int zIndex = y * width + x;
+
+                    if (depth >= _zBuffer[zIndex])
+                        continue;
+
+                    _zBuffer[zIndex] = depth;
+                    //new end
+
+                    //Vector3 point = tri.V0.PRot * l0 + tri.V1.PRot * l1 + tri.V2.PRot * l2;
                     Vector3 L = Vector3.Normalize(_lightPosition - point);
                     Vector3 V = new Vector3(0, 0, 1);
                     Vector3 R = Vector3.Normalize(2 * Vector3.Dot(N, L) * N - L);
