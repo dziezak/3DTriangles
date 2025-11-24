@@ -139,6 +139,13 @@
                         Margin="10"
                         />
                 <CheckBox x:Name="AnimateLight" Content="Animuj światło" Margin="10"/>
+                
+                <CheckBox x:Name="AnimateSurface"
+                          Content="Animuj powierzchnię"
+                          Margin="10"
+                          Checked="AnimateSurface_Checked"
+                          Unchecked="AnimateSurface_Unchecked"/>
+
             </StackPanel>
         </StackPanel>
     </Grid>

@@ -23,6 +23,13 @@ namespace BezierVisualizer
         private Vector3 _lightColor = new Vector3(1f, 1f, 1f);
         private Vector3 _objectColor = new Vector3(1f, 1f, 1f); // default white color
 
+        private DispatcherTimer _waveTimer;
+        private double _waveTime = 0;
+
+        private bool _animateSurface = false;
+        private double _amplitude = 0.2;
+        private double _frequency = 2.0;
+
 
         public MainWindow()
         {
@@ -43,6 +50,83 @@ namespace BezierVisualizer
             _lightTimer.Tick += UpdateLightPosition;
             _lightTimer.Start();
         }
+        
+        private void AnimateSurface_Checked(object sender, RoutedEventArgs e)
+        {
+            _animateSurface = true;
+
+            if (_waveTimer == null)
+            {
+                _waveTimer = new DispatcherTimer();
+                _waveTimer.Interval = TimeSpan.FromMilliseconds(30);
+                _waveTimer.Tick += WaveTick;
+            }
+            _waveTimer.Start();
+        }
+
+        private void AnimateSurface_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _animateSurface = false;
+            _waveTimer?.Stop();
+        }
+        
+        private void WaveTick(object sender, EventArgs e)
+        {
+            if (!_animateSurface) return;
+
+            _waveTime += 0.03;
+
+            var surface = FileLoader.LoadSurface("Resources/surface.txt");
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    Vector3 p = surface.ControlPoints[i, j];
+
+                    float dist = (float)Math.Sqrt(i * i + j * j);
+
+                    float dz = (float)(_amplitude * 
+                                       Math.Sin(_frequency * _waveTime + dist));
+
+                    p.Z += dz;
+
+                    surface.ControlPoints[i, j] = p;
+                }
+            }
+
+            RedrawScene(surface);
+        }
+        
+        private void RedrawScene(BezierSurface surface)
+        {
+            float alfa = (float)AlfaSlider.Value;
+            float beta = (float)BetaSlider.Value;
+            int resolution = (int)ResolutionSlider.Value;
+
+            var triangles = MeshBuilder.GenerateMesh(surface, resolution);
+
+            foreach (var tri in triangles)
+            {
+                tri.V0.Rotate(alfa, beta);
+                tri.V1.Rotate(alfa, beta);
+                tri.V2.Rotate(alfa, beta);
+            }
+
+            CanvasArea.SetTriangles(triangles,
+                showBezierPolygon: ShowBezierPolygon.IsChecked == true,
+                showTriangleMesh: ShowTriangleMesh.IsChecked == true,
+                showFilledTriangles: ShowFilledTriangles.IsChecked == true,
+                kd: (float)KdSlider.Value,
+                ks: (float)KsSlider.Value,
+                m: (int)MSlider.Value,
+                UseNormalMap: UseNormalMap.IsChecked == true,
+                UseNormalBitMap: UseNormalBitMap.IsChecked == true
+            );
+        }
+
+
+
         
         private void PickObjectColorButton_Click(object sender, RoutedEventArgs e)
         {
