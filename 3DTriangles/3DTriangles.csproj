@@ -11,22 +11,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Resources\surface.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Remove="Resources\john-cena.bmp" />
     <Content Include="Resources\john-cena.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Remove="Resources\surface.txt" />
     <None Remove="Resources\brick_normalmap.png" />
     <Content Include="Resources\brick_normalmap.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Remove="Resources\Vincent_Willem_van_Gogh_128.bmp" />
+    <Content Include="Resources\surface.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\Vincent_Willem_van_Gogh_128.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Remove="Resources\surface.txt" />
   </ItemGroup>
 
   <ItemGroup>
